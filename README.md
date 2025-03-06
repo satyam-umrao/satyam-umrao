@@ -1,5 +1,5 @@
-# 💫 About Me:
-👋 Hi there, I'm Satyam! <br>🚀 BCA Student | Programmer<br>💻 Tech Stack: JavaScript, C, C++, Python<br>🔧 Passionate about: Web Development, Problem-Solving, and Open-Source<br><br>📌 Currently Learning: Advanced Algorithms & System Design<br>📫 Let's Connect: [Your LinkedIn/Twitter/GitHub Profile]<br><br>🌱 Always exploring new technologies and building cool projects!
+# 👋 Hi there, I'm Satyam_Umrao!
+ 💫About me :<br>🚀 BCA Student | Programmer<br>💻 Tech Stack: JavaScript, C, C++, Python<br>🔧 Passionate about: Web Development, Problem-Solving, and Open-Source<br><br>📌 Currently Learning: Advanced Algorithms & System Design<br>📫 Let's Connect: [Your LinkedIn/Twitter/GitHub Profile]<br><br>🌱 Always exploring new technologies and building cool projects!
 
 
 ## 🌐 Socials:
