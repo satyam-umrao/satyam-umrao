@@ -1,8 +1,8 @@
 ![Header](./github-header-image.png)
 
 # 👋 Hey there ! :
+<img align="right" alt="Coding" width="399px" src="https://cdn.dribbble.com/users/1025838/screenshots/6220885/devguy3.gif">
 💫About me :<br>🚀 BCA Student | Programmer<br>💻 Tech Stack: JavaScript, C, C++, Python<br>🔧 Passionate about: Web Development, Problem-Solving, and Open-Source<br><br>📌 Currently Learning: Advanced Algorithms & System Design<br>📫 Let's Connect: [Your LinkedIn/Twitter/GitHub Profile]<br><br>🌱 Always exploring new technologies and building cool projects!
-
 
 ## 🌐 Socials:
 [![Instagram](https://img.shields.io/badge/Instagram-%23E4405F.svg?logo=Instagram&logoColor=white)](https://instagram.com/s.a.t.y.a.m_84) [![LinkedIn](https://img.shields.io/badge/LinkedIn-%230077B5.svg?logo=linkedin&logoColor=white)](https://in.linkedin.com/in/satyam-umrao) [![Pinterest](https://img.shields.io/badge/Pinterest-%23E60023.svg?logo=Pinterest&logoColor=white)](https://pin.it/49B6UBltq) [![Quora](https://img.shields.io/badge/Quora-%23B92B27.svg?logo=Quora&logoColor=white)](https://www.quora.com/profile/Satyam-Umrao-4) [![X](https://img.shields.io/badge/X-black.svg?logo=X&logoColor=white)](https://x.com/SatyamUmrao_?t=lE07xwkYqjQ13boA9p9f2Q&s=09) [![email](https://img.shields.io/badge/Email-D14836?logo=gmail&logoColor=white)](mailto:satyamumrao11225@gmail.com) 
