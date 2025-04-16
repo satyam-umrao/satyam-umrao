@@ -12,7 +12,7 @@
 
 <div align="center">
 
-  <img height="290px" src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=satyam-umrao&theme=github_dark" alt="GitHub Profile Summary" />
+  <img height="240px" src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=satyam-umrao&theme=github_dark" alt="GitHub Profile Summary" />
   <img height="165px" src="https://github-readme-streak-stats.herokuapp.com/?user=satyam-umrao&theme=onedark" /> 
   <img height="165px" src="https://github-readme-stats.anuraghazra1.vercel.app/api/top-langs/?username=satyam-umrao&layout=compact&theme=onedark" /> 
 </div>
