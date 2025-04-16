@@ -16,8 +16,8 @@
 
   <img height="240px" src="https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=satyam-umrao&theme=github_dark" alt="GitHub Profile Summary" />
   <br/>
-    <a href="https://github.com/satyam-umrao/github-readme-stats"><img height="165px"  alt="Satyam Umrao's Github Stats" src="https://github-readme-stats-sigma-five.vercel.app/api?username=satyam-umrao&show_icons=true&count_private=true&theme=react&hide_border=true&bg_color=0D1117" /></a>
-  <a href="https://github.com/satyam-umrao/github-readme-stats"><img height="165px"  alt="Satyam Umrao's Top Languages" src="https://github-readme-stats-sigma-five.vercel.app/api/top-langs/?username=satyam-umrao&langs_count=8&count_private=true&layout=compact&theme=react&hide_border=true&bg_color=0D1117" /></a>
+    <a href="https://github.com/satyam-umrao/github-readme-stats"><img width="375px"  alt="Satyam Umrao's Github Stats" src="https://github-readme-stats-sigma-five.vercel.app/api?username=satyam-umrao&show_icons=true&count_private=true&theme=react&hide_border=true&bg_color=0D1117" /></a>
+  <a href="https://github.com/satyam-umrao/github-readme-stats"><img width="375px"  alt="Satyam Umrao's Top Languages" src="https://github-readme-stats-sigma-five.vercel.app/api/top-langs/?username=satyam-umrao&langs_count=8&count_private=true&layout=compact&theme=react&hide_border=true&bg_color=0D1117" /></a>
   <br/>
   <img height="165px" src="https://github-readme-streak-stats.herokuapp.com/?user=satyam-umrao&theme=onedark" /> 
   <img height="165px" src="https://github-readme-stats.anuraghazra1.vercel.app/api/top-langs/?username=satyam-umrao&layout=compact&theme=onedark" /> 
