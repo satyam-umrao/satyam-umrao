@@ -1,6 +1,6 @@
 ![Header](./github-header-image.png)
 
-# 👋 Hey there ! :
+# 👋 Hey there ! 
 <img align="right" alt="Coding" width="380px" src="https://cdn.dribbble.com/users/1025838/screenshots/6220885/devguy3.gif">
 💫About me :<br>🚀 BCA Student | Programmer<br>💻 Tech Stack: JavaScript, C, C++, Python<br>🔧 Passionate about: Web Development, Problem-Solving, and Open-Source<br><br>📌 Currently Learning: Advanced Algorithms & System Design<br>📫 Let's Connect: [Your LinkedIn/Twitter/GitHub Profile]<br><br>🌱 Always exploring new technologies and building cool projects!
 
