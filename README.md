@@ -15,27 +15,31 @@
 <br>
 <p align="center">
   <a href="https://instagram.com/s.a.t.y.a.m_84">
-    <img align="center" src="https://cdn.worldvectorlogo.com/logos/instagram-2016-6.svg" width="50" height="50" alt="Website"/>
+    <img align="center" src="https://cdn.worldvectorlogo.com/logos/instagram-2016-6.svg" width="70" height="50" alt="Website"/>
   </a>
   &nbsp;&nbsp;&nbsp;
   <a href="https://www.linkedin.com/in/satyam-umrao-4b3615287?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app">
-    <img align="center" src="https://cdn.worldvectorlogo.com/logos/linkedin-icon-3.svg" width="50" height="50" alt="Linkedin"/>
+    <img align="center" src="https://cdn.worldvectorlogo.com/logos/linkedin-icon-3.svg" width="70" height="50" alt="Linkedin"/>
   </a>
   &nbsp;&nbsp;&nbsp;
   <a href="https://pin.it/49B6UBltq">
-    <img align="center" src="https://cdn.worldvectorlogo.com/logos/pinterest-3.svg" width="55" height="50" alt="Mail" />
+    <img align="center" src="https://cdn.worldvectorlogo.com/logos/pinterest-3.svg" width="75" height="50" alt="Mail" />
   </a>
   &nbsp;&nbsp;&nbsp;
   <a href="https://www.quora.com/profile/Satyam-Umrao-4">
-    <img align="center" src="https://cdn.worldvectorlogo.com/logos/quora-logo-2015.svg" width="55" height="50" alt="Mail" />
+    <img align="center" src="https://cdn.worldvectorlogo.com/logos/quora-logo-2015.svg" width="75" height="50" alt="Mail" />
   </a>
   &nbsp;&nbsp;&nbsp;
   <a href="https://x.com/SatyamUmrao_?t=lE07xwkYqjQ13boA9p9f2Q&s=09">
-    <img align="center" src="https://cdn.worldvectorlogo.com/logos/twitter-logo-2.svg" width="55" height="50" alt="Mail" />
+    <img align="center" src="https://cdn.worldvectorlogo.com/logos/twitter-logo-2.svg" width="75" height="50" alt="Mail" />
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://x.com/SatyamUmrao_?t=lE07xwkYqjQ13boA9p9f2Q&s=09" >
+    <img align="center" src="https://cdn.worldvectorlogo.com/logos/whatsapp-2.svg" width="125" height="65" alt="Mail" />
   </a>
   &nbsp;&nbsp;&nbsp;
   <a href="mailto:satyamumrao11225@gmail.com">
-    <img align="center" src="https://cdn.worldvectorlogo.com/logos/official-gmail-icon-2020-.svg" width="55" height="50" alt="Mail" />
+    <img align="center" src="https://cdn.worldvectorlogo.com/logos/official-gmail-icon-2020-.svg" width="75" height="50" alt="Mail" />
   </a>
 </p>
  
