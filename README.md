@@ -11,13 +11,34 @@
 ## 💻 Tech Stack: 
 <p align="center"> <img src="https://skillicons.dev/icons?i=html,css,tailwind,js,c,cpp,py,git,github,githubactions,vscode,vercel,netlify,figma,aws,linux,arch" /> </p>
 
-## 🌐 Socials:
-<div align="center"> 
-  
-[![Instagram](https://img.shields.io/badge/Instagram-%23E4405F.svg?logo=Instagram&logoColor=white)](https://instagram.com/s.a.t.y.a.m_84) [![LinkedIn](https://img.shields.io/badge/LinkedIn-%230077B5.svg?logo=linkedin&logoColor=white)](https://in.linkedin.com/in/satyam-umrao) [![Pinterest](https://img.shields.io/badge/Pinterest-%23E60023.svg?logo=Pinterest&logoColor=white)](https://pin.it/49B6UBltq) [![Quora](https://img.shields.io/badge/Quora-%23B92B27.svg?logo=Quora&logoColor=white)](https://www.quora.com/profile/Satyam-Umrao-4) [![X](https://img.shields.io/badge/X-black.svg?logo=X&logoColor=white)](https://x.com/SatyamUmrao_?t=lE07xwkYqjQ13boA9p9f2Q&s=09) [![email](https://img.shields.io/badge/Email-D14836?logo=gmail&logoColor=white)](mailto:satyamumrao11225@gmail.com) 
-
-</div>
-
+## 🌐 Connect with me:
+<br>
+<p align="center">
+  <a href="https://instagram.com/s.a.t.y.a.m_84">
+    <img align="center" src="https://cdn.worldvectorlogo.com/logos/instagram-2016-6.svg" width="50" height="50" alt="Website"/>
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://in.linkedin.com/in/satyam-umrao">
+    <img align="center" src="https://cdn.worldvectorlogo.com/logos/linkedin-icon-3.svg" width="50" height="50" alt="Linkedin"/>
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://pin.it/49B6UBltq">
+    <img align="center" src="https://cdn.worldvectorlogo.com/logos/pinterest-3.svg" width="55" height="50" alt="Mail" />
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://www.quora.com/profile/Satyam-Umrao-4">
+    <img align="center" src="https://cdn.worldvectorlogo.com/logos/quora-logo-2015.svg" width="55" height="50" alt="Mail" />
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://x.com/SatyamUmrao_?t=lE07xwkYqjQ13boA9p9f2Q&s=09">
+    <img align="center" src="https://cdn.worldvectorlogo.com/logos/twitter-logo-2.svg" width="55" height="50" alt="Mail" />
+  </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="mailto:satyamumrao11225@gmail.com">
+    <img align="center" src="https://cdn.worldvectorlogo.com/logos/official-gmail-icon-2020-.svg" width="55" height="50" alt="Mail" />
+  </a>
+</p>
+ 
 ## Contributions
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/satyam-umrao/satyam-umrao/output/github-contribution-grid-snake-dark.svg">
