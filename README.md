@@ -34,7 +34,7 @@
     <img align="center" src="https://cdn.worldvectorlogo.com/logos/twitter-logo-2.svg" width="75" height="50" alt="Mail" />
   </a>
   &nbsp;&nbsp;&nbsp;
-  <a href="https://x.com/SatyamUmrao_?t=lE07xwkYqjQ13boA9p9f2Q&s=09" >
+  <a href="https://wa.me/+919794069148?text=Hi%20" >
     <img align="center" src="https://cdn.worldvectorlogo.com/logos/whatsapp-2.svg" width="125" height="65" alt="Mail" />
   </a>
   &nbsp;&nbsp;&nbsp;
