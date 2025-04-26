@@ -18,7 +18,7 @@
     <img align="center" src="https://cdn.worldvectorlogo.com/logos/instagram-2016-6.svg" width="50" height="50" alt="Website"/>
   </a>
   &nbsp;&nbsp;&nbsp;
-  <a href="https://in.linkedin.com/in/satyam-umrao">
+  <a href="https://www.linkedin.com/in/satyam-umrao-4b3615287?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app">
     <img align="center" src="https://cdn.worldvectorlogo.com/logos/linkedin-icon-3.svg" width="50" height="50" alt="Linkedin"/>
   </a>
   &nbsp;&nbsp;&nbsp;
