@@ -1,4 +1,4 @@
-![Header](./header.gif)
+![Header](<img src="./header.gif"> )
 
 
 # 👋 Hey there !
