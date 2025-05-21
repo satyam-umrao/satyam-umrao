@@ -1,4 +1,4 @@
-![Header](<img src="./header.gif"> )
+![Header](<img src="https://github.com/satyam-umrao/satyam-umrao/blob/d140b5a6fee9928ac42acfd7c8512ef6dcc18f67/header.gif"> )
 
 
 # 👋 Hey there !
