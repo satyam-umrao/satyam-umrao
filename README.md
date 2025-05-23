@@ -1,4 +1,4 @@
-![Header](<img src="https://github.com/satyam-umrao/satyam-umrao/blob/d140b5a6fee9928ac42acfd7c8512ef6dcc18f67/header.gif"> )
+![Header](./github-header-image.png )
 
 # 👋 Hey there !
 <img align="right" margin="20px" width="380px" src="https://user-images.githubusercontent.com/74038190/225813708-98b745f2-7d22-48cf-9150-083f1b00d6c9.gif"> <br>
