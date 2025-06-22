@@ -2,7 +2,7 @@
 
 # 👋 Hey there !
 <img align="right" margin="20px" width="380px" src="https://user-images.githubusercontent.com/74038190/225813708-98b745f2-7d22-48cf-9150-083f1b00d6c9.gif"> <br>
-💫About me :<br>🚀 BCA Student | Programmer<br>💻 Tech Stack: JavaScript, C, C++, Python<br>🔧 Passionate about: Web Development, Problem-Solving, and Open-Source<br>📌 Currently Learning: Advanced Algorithms & System Design<br>📫 Let's Connect: [Your LinkedIn/Twitter/GitHub Profile]<br><br>🌱 Always exploring new technologies and building cool projects!
+💫About me :<br>🚀 BCA Student | Programmer<br>💻 Tech Stack: JavaScript, C, C++, Python<br>🔧 Passionate about: Web Development, Problem-Solving, and Open-Source<br>📌 Currently Learning: Advanced Algorithms & System Design<br>📫 Let's Connect<br><br>🌱 Always exploring new technologies and building cool projects!
 
 <hr>
 
