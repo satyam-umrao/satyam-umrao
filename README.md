@@ -45,8 +45,7 @@
     <img align="center" src="https://cdn.worldvectorlogo.com/logos/twitter-logo-2.svg" width="75" height="50" alt="Mail" />
   </a>
   &nbsp;&nbsp;&nbsp;
-  <a href="https://wa.me/+919794069148?text=Hello Satyam,I checked your GitHub account and explored some of your projects—nice work! 
-Let me know if you’re open to a quick discussion. Would love to talk more about it.%20" >
+  <a href="https://wa.me/+919794069148?text=Hello Satyam,I checked your GitHub account and explored some of your projects—nice work!,Let me know if you’re open to a quick discussion. Would love to talk more about it.%20" >
     <img align="center" src="https://cdn.worldvectorlogo.com/logos/whatsapp-2.svg" width="115" height="65" alt="Mail" />
   </a>
   &nbsp;&nbsp;&nbsp;
