@@ -1,56 +1,73 @@
-![Header](./github-header-image.png )
+![Header](./github-header-image.png)
 
-# 👋 Hey there !
-<img align="right" margin="20px" width="380px" src="https://user-images.githubusercontent.com/74038190/225813708-98b745f2-7d22-48cf-9150-083f1b00d6c9.gif"> <br>
-💫About me :<br>🚀 BCA Student | Programmer<br>💻 Tech Stack: JavaScript, C, C++, Python<br>🔧 Passionate about: Web Development, Problem-Solving, and Open-Source<br>📌 Currently Learning: Advanced Algorithms & System Design<br>📫 Let's Connect<br><br>🌱 Always exploring new technologies and building cool projects!
+# 👋 Hey there!
+
+## 💫 About Me
+<img align="right" margin="20px" width="380px" src="https://user-images.githubusercontent.com/74038190/225813708-98b745f2-7d22-48cf-9150-083f1b00d6c9.gif">
+
+🚀 **BCA Student | Full-Stack Developer in Progress**  
+💻 **Stack:** JavaScript, React, Python, C/C++  
+🌐 **Interests:** Web Development, Backend Systems, Clean UI  
+🧠 **Learning:** AI/ML Fundamentals, APIs, Databases, System Design  
+
+🔧 Actively working on full-stack projects using modern tools and workflows  
+📈 Improving problem-solving skills through real-world challenges and coding practice  
+🤝 Open to internships, collaborations, and open-source contributions  
+
+🌱 Passionate about building meaningful software and growing every day.
+
 
 <hr>
 
+## 💻 Tech Stack
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=html,css,tailwind,js,react,vite,c,cpp,py,mysql,git,github,githubactions,vscode,vercel,netlify,figma,linux,framer" />
+</p>
 
- 
-## 💻 Tech Stack: 
-<p align="center"> <img src="https://skillicons.dev/icons?i=html,css,tailwind,js,c,cpp,py,git,github,githubactions,vscode,vercel,netlify,figma,aws,linux,arch" /> </p>
+<hr>
 
-## Contributions
-<p align="center"> 
+## 🐍 Contributions
+<p align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/satyam-umrao/satyam-umrao/output/github-contribution-grid-snake-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/satyam-umrao/satyam-umrao/output/github-contribution-grid-snake.svg">
   <img alt="github contribution grid snake animation" src="https://raw.githubusercontent.com/satyam-umrao/satyam-umrao/output/github-contribution-grid-snake.svg">
 </picture>
-  </p>
+</p>
+
 <hr>
 
-
-## 🌐 Connect with me:
-<br>
+## 🌐 Connect with Me
 <p align="center">
   <a href="https://instagram.com/s.a.t.y.a.m_84">
-    <img align="center" src="https://cdn.worldvectorlogo.com/logos/instagram-2016-6.svg" width="70" height="50" alt="Website"/>
+    <img src="https://cdn.worldvectorlogo.com/logos/instagram-2016-6.svg" width="70" height="50"/>
   </a>
-  &nbsp;&nbsp;&nbsp;
-  <a href="https://www.linkedin.com/in/satyam-umrao-4b3615287?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app">
-    <img align="center" src="https://cdn.worldvectorlogo.com/logos/linkedin-icon-3.svg" width="70" height="50" alt="Linkedin"/>
+  &nbsp;&nbsp;
+  <a href="https://www.linkedin.com/in/satyam-umrao-4b3615287">
+    <img src="https://cdn.worldvectorlogo.com/logos/linkedin-icon-3.svg" width="70" height="50"/>
   </a>
-  &nbsp;&nbsp;&nbsp;
+  &nbsp;&nbsp;
   <a href="https://pin.it/49B6UBltq">
-    <img align="center" src="https://cdn.worldvectorlogo.com/logos/pinterest-3.svg" width="75" height="50" alt="Mail" />
+    <img src="https://cdn.worldvectorlogo.com/logos/pinterest-3.svg" width="75" height="50"/>
   </a>
-  &nbsp;&nbsp;&nbsp;
+  &nbsp;&nbsp;
   <a href="https://www.quora.com/profile/Satyam-Umrao-4">
-    <img align="center" src="https://cdn.worldvectorlogo.com/logos/quora-logo-2015.svg" width="75" height="50" alt="Mail" />
+    <img src="https://cdn.worldvectorlogo.com/logos/quora-logo-2015.svg" width="75" height="50"/>
   </a>
-  &nbsp;&nbsp;&nbsp;
-  <a href="https://x.com/SatyamUmrao_?t=lE07xwkYqjQ13boA9p9f2Q&s=09">
-    <img align="center" src="https://cdn.worldvectorlogo.com/logos/twitter-logo-2.svg" width="75" height="50" alt="Mail" />
+  &nbsp;&nbsp;
+  <a href="https://x.com/SatyamUmrao_">
+    <img src="https://cdn.worldvectorlogo.com/logos/twitter-logo-2.svg" width="75" height="50"/>
   </a>
-  &nbsp;&nbsp;&nbsp;
-  <a href="https://wa.me/+919794069148?text=Hello Satyam,I checked your GitHub account and explored some of your projects—nice work!.--Let me know if you’re open to a quick discussion. Would love to talk more about it.%20" >
-    <img align="center" src="https://cdn.worldvectorlogo.com/logos/whatsapp-2.svg" width="115" height="65" alt="Mail" />
+  &nbsp;&nbsp;
+  <a href="https://wa.me/+919794069148">
+    <img src="https://cdn.worldvectorlogo.com/logos/whatsapp-2.svg" width="115" height="65"/>
   </a>
-  &nbsp;&nbsp;&nbsp;
+  &nbsp;&nbsp;
   <a href="mailto:satyamumrao11225@gmail.com">
-    <img align="center" src="https://cdn.worldvectorlogo.com/logos/official-gmail-icon-2020-.svg" width="75" height="50" alt="Mail" />
+    <img src="https://cdn.worldvectorlogo.com/logos/official-gmail-icon-2020-.svg" width="75" height="50"/>
   </a>
-  <hr>
 </p>
+
+<hr>
+
+⭐ *“Code. Learn. Build. Repeat.”*
