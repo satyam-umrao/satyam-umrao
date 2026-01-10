@@ -43,7 +43,7 @@
     <img src="https://cdn.worldvectorlogo.com/logos/instagram-2016-6.svg" width="70" height="50"/>
   </a>
   &nbsp;&nbsp;
-  <a href="https://www.linkedin.com/in/satyam-umrao-4b3615287">
+  <a href="https://www.linkedin.com/in/satyam-umrao">
     <img src="https://cdn.worldvectorlogo.com/logos/linkedin-icon-3.svg" width="70" height="50"/>
   </a>
   &nbsp;&nbsp;
