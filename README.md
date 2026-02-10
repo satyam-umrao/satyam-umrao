@@ -3,15 +3,15 @@
 
 ## 💫 About Me
 <div align="center">
-  <img align="right" width="450" src="./code.gif" alt="coding gif"/>
+  <img align="right" width="350" src="./code.gif" alt="coding gif"/>
 
   <table align="left">
-    <ul list-style="none" align="left">
-        <p>🚀 BCA Student & Frontend Developer</p>
-        <p>💻 React • TypeScript • JavaScript • Python • C/C++</p>
-        <p>🌐 Clean UI & Responsive Web Development</p>
-        <p>🔧 Real-world projects & practical learning</p>
-        <p>🌱 Continuous growth mindset</p>
+    <ul align="left">
+🚀 BCA Student & Frontend Developer  </br>
+💻 React • TypeScript • JavaScript • Python • C/C++ </br> 
+🌐 Clean UI & Responsive Web Development  </br>
+🔧 Real-world projects & practical learning  </br>
+🌱 Continuous growth mindset </br>
     </ul>
   </table>
 </div>
