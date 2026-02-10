@@ -1,8 +1,14 @@
-
+# 👋Hi! I'm
 ![Header](./cover.png)
 
+## 💫 About Me
+<img align="right" width="340px" src="./code.gif">
 
-
+🚀 BCA Student & Frontend Developer  
+💻 React • TypeScript • JavaScript • Python • C/C++  
+🌐 Clean UI & Responsive Web Development  
+🔧 Real-world projects & practical learning  
+🌱 Continuous growth mindset
 
 <hr>
 
