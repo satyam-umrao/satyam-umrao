@@ -2,27 +2,7 @@
 ![Header](./cover.png)
 
 
-## 💫 About Me
-<table align="center">
-  <tr>
-    <td align="left" width="800px">
-      <div>
-        <ul>
-          <li>🚀 BCA Student & Frontend Developer </li>
-          <li💻 React • TypeScript • JavaScript • Python • C/C++  ></li>
-          <li>🌐 Clean UI & Responsive Web Development  </li>
-          <li>🔧 Real-world projects & practical learning </li>
-          <li>🌱 Continuous growth mindset</li>
-        </ul>
-      </div>
-    </td>
-    <td align="right">
-      <a href="https://instagram.com/s.a.t.y.a.m_84">
-        <img src="https://github.com/user-attachments/assets/f33c5d19-64ae-41c5-be85-8d86b37a5a0d" align="right" width="200">
-      </a>
-    </td>
-  </tr>
-</table>
+
 
 <hr>
 
