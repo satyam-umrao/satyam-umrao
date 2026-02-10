@@ -3,7 +3,7 @@
 
 
 ## 💫 About Me
-<img align="right" width="240px" src="https://private-user-images.githubusercontent.com/74038190/371756373-fddcdbcd-5ea2-4416-9f59-ca7fd9394aca.gif?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzA3MzUxNzgsIm5iZiI6MTc3MDczNDg3OCwicGF0aCI6Ii83NDAzODE5MC8zNzE3NTYzNzMtZmRkY2RiY2QtNWVhMi00NDE2LTlmNTktY2E3ZmQ5Mzk0YWNhLmdpZj9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjAyMTAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwMjEwVDE0NDc1OFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTRhNGVhNmVlMjcxZmExYWVjMmY4ZmQ4ZTg3NDlhOTUwNDFjMzI5MzBiMGQ3MDhkNTAzOTc1YzFmMzg0MGVjYzgmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.MNGF6uJoxoA5uHMK4ER319nsQ3cw_J2qSv7V-Ni3P40">
+<img src="https://github.com/user-attachments/assets/f33c5d19-64ae-41c5-be85-8d86b37a5a0d" align="right" width="200">
 
 🚀 BCA Student & Frontend Developer  
 💻 React • TypeScript • JavaScript • Python • C/C++  
