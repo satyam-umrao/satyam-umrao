@@ -2,13 +2,20 @@
 ![Header](./cover.png)
 
 ## 💫 About Me
-<img align="right" width="350px" src="./code.gif">
+<div align="center">
+  <img align="right" width="350" src="./code.gif" alt="coding gif"/>
 
-🚀 BCA Student & Frontend Developer  
-💻 React • TypeScript • JavaScript • Python • C/C++  
-🌐 Clean UI & Responsive Web Development  
-🔧 Real-world projects & practical learning  
-🌱 Continuous growth mindset
+  <table align="left">
+    <ul list-style="none" align="left">
+    <li>🚀 BCA Student & Frontend Developer</li>
+    <li>💻 React • TypeScript • JavaScript • Python • C/C++</li>
+    <li>🌐 Clean UI & Responsive Web Development</li>
+    <li>🔧 Real-world projects & practical learning</li>
+    <li>🌱 Continuous growth mindset</li>
+    </ul>
+  </table>
+</div>
+
 
 <hr>
 
