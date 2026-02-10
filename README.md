@@ -8,7 +8,7 @@
 
   <div align="left">
     🚀 BCA Student & Frontend Developer<br/>
-    💻 React • TypeScript • JavaScript • Python • C/C++<br/>
+    💻 React • TypeScript • Python • C/C++<br/>
     🌐 Clean UI & Responsive Web Development<br/>
     🔧 Real-world projects & practical learning<br/>
     🌱 Continuous growth mindset
