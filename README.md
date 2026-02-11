@@ -3,28 +3,28 @@
 <!-- HEADER -->
 <tr>
 <td align="center" colspan="2">
-
-<h1>👋 Hi! I'm Satyam Umrao</h1>
 <img src="./cover.png" width="100%"/>
-
+<b>BCA Student • Frontend Developer • React Enthusiast</b>
 </td>
 </tr>
 
 <!-- ABOUT ME TITLE -->
+<tr></tr>
 <tr>
 <td align="center" colspan="2">
-<h2>💫 About Me</h2>
+<h2>💫 About Me</h1>
 </td>
 </tr>
 
 <!-- ABOUT CONTENT -->
+<tr></tr>
 <tr>
 <td width="65%">
 
-🚀 <b>BCA Student & Frontend Developer</b><br/><br/>
-💻 <b>Stack:</b> React • TypeScript • Python • C/C++<br/><br/>
-🌐 <b>Focus:</b> Clean UI & Responsive Web Development<br/><br/>
-🔧 <b>Approach:</b> Real-world projects & practical implementation<br/><br/>
+🚀 <b>BCA Student & Frontend Developer</b><br/>
+💻 <b>Stack:</b> React • TypeScript • Python • C/C++<br/>
+🌐 <b>Focus:</b> Clean UI & Responsive Web Development<br/>
+🔧 <b>Approach:</b> Real-world projects & practical implementation<br/>
 🌱 <b>Mindset:</b> Continuous learning & growth  
 
 </td>
@@ -35,6 +35,7 @@
 </tr>
 
 <!-- TECH STACK TITLE -->
+<tr></tr>
 <tr>
 <td align="center" colspan="2">
 <h2>💻 Tech Stack</h2>
@@ -42,6 +43,7 @@
 </tr>
 
 <!-- TECH STACK ICONS -->
+<tr></tr>
 <tr>
 <td align="center" colspan="2">
 
@@ -69,6 +71,7 @@
 </tr>
 
 <!-- CONTRIBUTIONS TITLE -->
+<tr></tr>
 <tr>
 <td align="center" colspan="2">
 <h2>🐍 Contributions</h2>
@@ -76,6 +79,7 @@
 </tr>
 
 <!-- CONTRIBUTIONS CONTENT -->
+<tr></tr>
 <tr>
 <td align="center" colspan="2">
 
@@ -89,6 +93,7 @@
 </tr>
 
 <!-- CONNECT TITLE -->
+<tr></tr>
 <tr>
 <td align="center" colspan="2">
 <h2>🌐 Connect With Me</h2>
@@ -96,33 +101,34 @@
 </tr>
 
 <!-- CONNECT ICONS -->
+<tr></tr>
 <tr>
 <td align="center" colspan="2">
 
 <a href="https://instagram.com/s.a.t.y.a.m_84">
-<img src="https://cdn-icons-png.flaticon.com/128/4138/4138124.png" width="65px"/>
+<img src="https://cdn-icons-png.flaticon.com/128/4138/4138124.png" width="70px"/>
 </a>
-
+&nbsp;&nbsp;&nbsp;
 <a href="https://x.com/SatyamUmrao_">
-<img src="https://images.vexels.com/media/users/3/137419/isolated/preview/b1a3fab214230557053ed1c4bf17b46c-twitter-icon-logo.png" width="65px"/>
+<img src="https://images.vexels.com/media/users/3/137419/isolated/preview/b1a3fab214230557053ed1c4bf17b46c-twitter-icon-logo.png" width="68px"/>
 </a>
-
+&nbsp;&nbsp;&nbsp;
 <a href="https://www.linkedin.com/in/satyam-umrao">
 <img src="https://upload.wikimedia.org/wikipedia/commons/f/f8/LinkedIn_icon_circle.svg" width="65px"/>
 </a>
-
+&nbsp;&nbsp;&nbsp;
 <a href="https://pin.it/49B6UBltq">
 <img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/pinterest-round-color-icon.png" width="65px"/>
 </a>
-
+&nbsp;&nbsp;&nbsp;
 <a href="https://www.quora.com/profile/Satyam-Umrao-4">
 <img src="https://cdn-icons-png.flaticon.com/512/185/185976.png" width="65px"/>
 </a>
-
+&nbsp;&nbsp;&nbsp;
 <a href="https://wa.me/+919794069148">
-<img src="https://static.vecteezy.com/system/resources/previews/042/127/115/non_2x/round-whatsapp-logo-with-long-shadow-on-a-transparent-background-free-png.png" width="65px"/>
+<img src="https://static.vecteezy.com/system/resources/previews/042/127/115/non_2x/round-whatsapp-logo-with-long-shadow-on-a-transparent-background-free-png.png" width="70px"/>
 </a>
-
+&nbsp;&nbsp;&nbsp;
 <a href="mailto:satyamumrao11225@gmail.com">
 <img src="https://static.vecteezy.com/system/resources/previews/022/613/021/non_2x/google-mail-gmail-icon-logo-symbol-free-png.png" width="65px"/>
 </a>
@@ -131,10 +137,10 @@
 </tr>
 
 <!-- MOTTO -->
+<tr></tr>
 <tr>
 <td align="center" colspan="2">
 
-<h2>⭐ Motto</h2>
 <b>“Code. Learn. Build. Repeat.”</b>
 
 </td>
