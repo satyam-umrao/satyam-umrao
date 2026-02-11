@@ -1,58 +1,143 @@
-# 👋 Hi! I'm Satyam Umrao
-![Header](./cover.png)
+<table width="100%">
 
-## 💫 About Me
+<!-- HEADER -->
+<tr>
+<td align="center" colspan="2">
 
-<div align="center">
-  <img align="right" width="350" src="./code.gif" alt="coding gif"/>
+<h1>👋 Hi! I'm Satyam Umrao</h1>
+<img src="./cover.png" width="100%"/>
 
-  <div align="left">
-    🚀 BCA Student & Frontend Developer<br/>
-    💻 React • TypeScript • Python • C/C++<br/>
-    🌐 Clean UI & Responsive Web Development<br/>
-    🔧 Real-world projects & practical learning<br/>
-    🌱 Continuous growth mindset
-  </div>
-</div>
+</td>
+</tr>
 
-<br clear="right"/>
+<!-- ABOUT ME TITLE -->
+<tr>
+<td align="center" colspan="2">
+<h2>💫 About Me</h2>
+</td>
+</tr>
 
-<hr/>
+<!-- ABOUT CONTENT -->
+<tr>
+<td width="65%">
 
-## 💻 Tech Stack
+🚀 <b>BCA Student & Frontend Developer</b><br/><br/>
+💻 <b>Stack:</b> React • TypeScript • Python • C/C++<br/><br/>
+🌐 <b>Focus:</b> Clean UI & Responsive Web Development<br/><br/>
+🔧 <b>Approach:</b> Real-world projects & practical implementation<br/><br/>
+🌱 <b>Mindset:</b> Continuous learning & growth  
 
-<p align="center">
-  <img src="https://skillicons.dev/icons?i=html,css,tailwind,js,react,vite,c,cpp,py,mysql,git,github,githubactions,vscode,vercel,netlify,figma,linux,framer" />
-</p>
+</td>
 
-<hr/>
+<td width="35%" align="right">
+<img src="./code.gif" width="320"/>
+</td>
+</tr>
 
-## 🐍 Contributions
+<!-- TECH STACK TITLE -->
+<tr>
+<td align="center" colspan="2">
+<h2>💻 Tech Stack</h2>
+</td>
+</tr>
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/satyam-umrao/satyam-umrao/output/github-contribution-grid-snake-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/satyam-umrao/satyam-umrao/output/github-contribution-grid-snake.svg">
-    <img alt="github contribution grid snake animation" src="https://raw.githubusercontent.com/satyam-umrao/satyam-umrao/output/github-contribution-grid-snake.svg">
-  </picture>
-</p>
+<!-- TECH STACK ICONS -->
+<tr>
+<td align="center" colspan="2">
 
-<hr/>
+<img src="https://iconic-api.onrender.com/dark/html" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/css" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/tailwind" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/js" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/nodejs" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/react" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/vite" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/c" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/cpp" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/python" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/mysql" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/git" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/github" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/github-actions" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/vscode" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/vercel" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/netlify" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/figma" width="60px"/>
+<img src="https://iconic-api.onrender.com/dark/linux" width="60px"/>
 
-## 🌐 Connect with Me
+</td>
+</tr>
 
-<table align="center">
-  <tr>
-    <td><a href="https://instagram.com/s.a.t.y.a.m_84"><img src="https://cdn.worldvectorlogo.com/logos/instagram-2016-6.svg" width="55"/></a></td>
-    <td><a href="https://www.linkedin.com/in/satyam-umrao"><img src="https://cdn.worldvectorlogo.com/logos/linkedin-icon-3.svg" width="55"/></a></td>
-    <td><a href="https://pin.it/49B6UBltq"><img src="https://cdn.worldvectorlogo.com/logos/pinterest-3.svg" width="55"/></a></td>
-    <td><a href="https://www.quora.com/profile/Satyam-Umrao-4"><img src="https://cdn.worldvectorlogo.com/logos/quora-logo-2015.svg" width="55"/></a></td>
-    <td><a href="https://x.com/SatyamUmrao_"><img src="https://cdn.worldvectorlogo.com/logos/twitter-logo-2.svg" width="55"/></a></td>
-    <td><a href="https://wa.me/+919794069148"><img src="https://cdn.worldvectorlogo.com/logos/whatsapp-2.svg" width="75"/></a></td>
-    <td><a href="mailto:satyamumrao11225@gmail.com"><img src="https://cdn.worldvectorlogo.com/logos/official-gmail-icon-2020-.svg" width="55"/></a></td>
-  </tr>
+<!-- CONTRIBUTIONS TITLE -->
+<tr>
+<td align="center" colspan="2">
+<h2>🐍 Contributions</h2>
+</td>
+</tr>
+
+<!-- CONTRIBUTIONS CONTENT -->
+<tr>
+<td align="center" colspan="2">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/satyam-umrao/satyam-umrao/output/github-contribution-grid-snake-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/satyam-umrao/satyam-umrao/output/github-contribution-grid-snake.svg">
+  <img alt="github contribution grid snake animation" src="https://raw.githubusercontent.com/satyam-umrao/satyam-umrao/output/github-contribution-grid-snake.svg">
+</picture>
+
+</td>
+</tr>
+
+<!-- CONNECT TITLE -->
+<tr>
+<td align="center" colspan="2">
+<h2>🌐 Connect With Me</h2>
+</td>
+</tr>
+
+<!-- CONNECT ICONS -->
+<tr>
+<td align="center" colspan="2">
+
+<a href="https://instagram.com/s.a.t.y.a.m_84">
+<img src="https://cdn-icons-png.flaticon.com/128/4138/4138124.png" width="65px"/>
+</a>
+
+<a href="https://x.com/SatyamUmrao_">
+<img src="https://images.vexels.com/media/users/3/137419/isolated/preview/b1a3fab214230557053ed1c4bf17b46c-twitter-icon-logo.png" width="65px"/>
+</a>
+
+<a href="https://www.linkedin.com/in/satyam-umrao">
+<img src="https://upload.wikimedia.org/wikipedia/commons/f/f8/LinkedIn_icon_circle.svg" width="65px"/>
+</a>
+
+<a href="https://pin.it/49B6UBltq">
+<img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/pinterest-round-color-icon.png" width="65px"/>
+</a>
+
+<a href="https://www.quora.com/profile/Satyam-Umrao-4">
+<img src="https://cdn-icons-png.flaticon.com/512/185/185976.png" width="65px"/>
+</a>
+
+<a href="https://wa.me/+919794069148">
+<img src="https://static.vecteezy.com/system/resources/previews/042/127/115/non_2x/round-whatsapp-logo-with-long-shadow-on-a-transparent-background-free-png.png" width="65px"/>
+</a>
+
+<a href="mailto:satyamumrao11225@gmail.com">
+<img src="https://static.vecteezy.com/system/resources/previews/022/613/021/non_2x/google-mail-gmail-icon-logo-symbol-free-png.png" width="65px"/>
+</a>
+
+</td>
+</tr>
+
+<!-- MOTTO -->
+<tr>
+<td align="center" colspan="2">
+
+<h2>⭐ Motto</h2>
+<b>“Code. Learn. Build. Repeat.”</b>
+
+</td>
+</tr>
+
 </table>
-
-<hr/>
-
-⭐ *“Code. Learn. Build. Repeat.”*
