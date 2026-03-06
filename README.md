@@ -51,6 +51,7 @@
 <img src="https://iconic-api.onrender.com/dark/netlify" width="60" alt="Netlify"/>
 <img src="https://iconic-api.onrender.com/dark/figma" width="60" alt="Figma"/>
 <img src="https://iconic-api.onrender.com/dark/linux" width="60" alt="Linux"/>
+<img src="https://iconic-api.onrender.com/dark/go" width="60" alt="go"/>
 </p>
 
 ## 🐍 Contributions
