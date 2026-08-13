@@ -10,7 +10,7 @@
 <tr>
 <td align="center">
 
-🚀 **BCA Student & Frontend Developer**
+🚀 **Android Developer**
 
 💻 **Stack:** React Native • TypeScript • Java • GO
 
