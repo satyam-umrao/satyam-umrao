@@ -14,7 +14,7 @@
 
 💻 **Stack:** React Native • TypeScript • Java • GO
 
-🌐 **Focus:** Clean UI & Responsive Web Development
+🌐 **Focus:** Android devlopment (Expo or Native cli)
 
 🔧 **Approach:** Real-world projects & practical implementation
 
