@@ -12,7 +12,7 @@
 
 🚀 **BCA Student & Frontend Developer**
 
-💻 **Stack:** React • TypeScript • Python • C/C++ • GO
+💻 **Stack:** React Native • TypeScript • Java • GO
 
 🌐 **Focus:** Clean UI & Responsive Web Development
 
