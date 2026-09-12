@@ -12,7 +12,7 @@
 
 🚀 **Android Developer**
 
-💻 **Stack:** React Native • TypeScript • Java • GO
+💻 **Stack:** React Native • Java • GO
 
 🌐 **Focus:** Android devlopment (Expo or Native cli)
 
