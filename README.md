@@ -22,4 +22,6 @@
 <a href="https://github.com/satyam-umrao/Java"><picture><source media="(prefers-color-scheme: light)" srcset="https://www.gitskins.com/api/section/pixel-card?username=satyam-umrao&i=3&r=Java&mode=light" /><img src="https://www.gitskins.com/api/section/pixel-card?username=satyam-umrao&i=3&r=Java&mode=dark" width="49%" alt="Java: All important java programs ☕" /></picture></a>
 <!--PROJECTS:END-->
 
+<!--STATS:START-->
+<!--STATS:END-->
 
