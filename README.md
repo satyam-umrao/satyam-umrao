@@ -3,7 +3,11 @@
 <img src="https://www.gitskins.com/api/section/pixel-room?username=satyam-umrao&mode=dark" width="100%" alt="Satyam Umrao's pixel studio" />
 </picture>
 
-<a href="https://github.com/satyam-umrao">GitHub</a> · <a href="https://portfolio.satyamumrao.in">Website</a> · <a href="https://x.com/SatyamUmrao_">X</a>
+<div><img src="assets/icons/space.svg" height="10" width="1" alt="" /></div>
+<a href="https://github.com/satyam-umrao"><img src="assets/icons/github.svg" height="28" alt="GitHub" /></a>&nbsp;&nbsp;&nbsp;
+<a href="https://portfolio.satyamumrao.in"><img src="assets/icons/website.svg" height="28" alt="Website" /></a>&nbsp;&nbsp;&nbsp;
+<a href="https://x.com/SatyamUmrao_"><img src="assets/icons/x.svg" height="28" alt="X" /></a>
+<div><img src="assets/icons/space.svg" height="10" width="1" alt="" /></div>
 
 <!--STATS:START-->
 <picture>
