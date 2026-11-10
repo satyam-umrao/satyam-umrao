@@ -23,10 +23,9 @@
 <!--PROJECTS:END-->
 
 <!--STATS:START-->
-| Total contributions | Commits (public) | Pull requests | Issues | Reviews | Private contributions |
-|:--:|:--:|:--:|:--:|:--:|:--:|
-| **1110** | 1080 | 23 | 6 | 0 | 1 |
-
-<sub>All-time, including private repos (counts only). Updated 2026-11-10.</sub>
+<picture>
+<source media="(prefers-color-scheme: light)" srcset="assets/stats-light.svg" />
+<img src="assets/stats-dark.svg" width="100%" alt="All-time contributions including private" />
+</picture>
 <!--STATS:END-->
 
