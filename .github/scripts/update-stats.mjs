@@ -119,21 +119,21 @@ const themes = {
   light: { bg: "#f6f8fa", border: "#d0d7de", value: "#1f2328", label: "#656d76" },
 };
 
-const W = 1080, H = 140, PAD = 30;
+const W = 1080, H = 108, PAD = 30;
 const colW = (W - PAD * 2) / stats.length;
 
 const build = (c) => {
   let body = "";
   // one size for every number, picked so the widest one leaves a clear gap
   const widest = Math.max(...stats.map(([, v]) => String(v).length));
-  let px = 7;
+  let px = 5;
   while (textWidth("0".repeat(widest), px) > colW - 44 && px > 3) px--;
-  const valueTop = 98 - 14 - 7 * px; // number sits just above the label
+  const valueTop = 64 - 8 - 7 * px; // number sits just above the label
 
   stats.forEach(([label, value], i) => {
     const x = PAD + i * colW;
     body += drawText(String(value), x, valueTop, px, c.value);
-    body += drawText(label, x, 98, 3, c.label);
+    body += drawText(label, x, 64, 3, c.label);
   });
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="All-time contributions: ${total} total, ${t.commits} commits, ${t.prs} pull requests, ${t.issues} issues, ${t.private} private" shape-rendering="crispEdges">
 <rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="14" fill="${c.bg}" stroke="${c.border}" stroke-width="2"/>
