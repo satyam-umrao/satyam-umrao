@@ -18,14 +18,15 @@ const gql = async (query, variables) => {
   return j.data;
 };
 
-// ---------- 1. fetch totals (all-time, incl. private as counts) ----------
+// ---------- 1. fetch data ----------
 const { user } = await gql(
   `query($login:String!){ user(login:$login){ createdAt } }`,
   { login: USER }
 );
 
 const now = new Date();
-const t = { commits: 0, prs: 0, issues: 0, reviews: 0, private: 0 };
+let commits = 0, prs = 0, priv = 0;
+const days = new Map(); // date -> contribution count
 
 for (let y = new Date(user.createdAt).getUTCFullYear(); y <= now.getUTCFullYear(); y++) {
   const from = `${y}-01-01T00:00:00Z`;
@@ -36,22 +37,56 @@ for (let y = new Date(user.createdAt).getUTCFullYear(); y <= now.getUTCFullYear(
         contributionsCollection(from:$from,to:$to){
           totalCommitContributions
           totalPullRequestContributions
-          totalIssueContributions
-          totalPullRequestReviewContributions
           restrictedContributionsCount
+          contributionCalendar{
+            weeks{ contributionDays{ date contributionCount } }
+          }
         }
       }
     }`,
     { login: USER, from, to }
   );
   const c = d.user.contributionsCollection;
-  t.commits += c.totalCommitContributions;
-  t.prs += c.totalPullRequestContributions;
-  t.issues += c.totalIssueContributions;
-  t.reviews += c.totalPullRequestReviewContributions;
-  t.private += c.restrictedContributionsCount;
+  commits += c.totalCommitContributions;
+  prs += c.totalPullRequestContributions;
+  priv += c.restrictedContributionsCount;
+  for (const w of c.contributionCalendar.weeks)
+    for (const day of w.contributionDays)
+      days.set(day.date, Math.max(days.get(day.date) ?? 0, day.contributionCount));
 }
-const total = t.commits + t.prs + t.issues + t.reviews + t.private;
+
+// commits shown = public commits + private contributions (private counts are combined by GitHub)
+const commitsAll = commits + priv;
+
+// stars across repos you own
+let stars = 0, cursor = null, more = true;
+while (more) {
+  const d = await gql(
+    `query($login:String!,$after:String){
+      user(login:$login){
+        repositories(first:100, after:$after, ownerAffiliations:OWNER){
+          nodes{ stargazerCount }
+          pageInfo{ hasNextPage endCursor }
+        }
+      }
+    }`,
+    { login: USER, after: cursor }
+  );
+  const r = d.user.repositories;
+  stars += r.nodes.reduce((s, n) => s + n.stargazerCount, 0);
+  more = r.pageInfo.hasNextPage;
+  cursor = r.pageInfo.endCursor;
+}
+
+// best streak = longest run of consecutive days with at least 1 contribution
+let best = 0, run = 0, prev = null;
+for (const date of [...days.keys()].sort()) {
+  const hasActivity = days.get(date) > 0;
+  const isNextDay = prev && (new Date(date) - new Date(prev)) / 86400000 === 1;
+  run = hasActivity ? (isNextDay && run > 0 ? run + 1 : 1) : 0;
+  if (hasActivity) best = Math.max(best, run);
+  prev = date;
+}
 
 // ---------- 2. 5x7 pixel font (each glyph = 7 rows of 5 bits) ----------
 const FONT = Object.fromEntries(
@@ -67,9 +102,12 @@ const FONT = Object.fromEntries(
     "8": "01110/10001/10001/01110/10001/10001/01110",
     "9": "01110/10001/10001/01111/00001/00010/01100",
     A: "01110/10001/10001/11111/10001/10001/10001",
+    B: "11110/10001/10001/11110/10001/10001/11110",
     C: "01110/10001/10000/10000/10000/10001/01110",
+    D: "11110/10001/10001/10001/10001/10001/11110",
     E: "11111/10000/10000/11110/10000/10000/11111",
     I: "01110/00100/00100/00100/00100/00100/01110",
+    K: "10001/10010/10100/11000/10100/10010/10001",
     L: "10000/10000/10000/10000/10000/10000/11111",
     M: "10001/11011/10101/10101/10001/10001/10001",
     O: "01110/10001/10001/10001/10001/10001/01110",
@@ -91,7 +129,6 @@ const drawText = (s, x, y, px, color) => {
   [...s].forEach((ch, i) => {
     const rows = FONT[ch] ?? FONT[" "];
     rows.forEach((row, ry) => {
-      // merge consecutive pixels in a row into one rect
       for (let cx = 0; cx < 5; ) {
         if (row[cx] === "1") {
           let end = cx;
@@ -107,11 +144,10 @@ const drawText = (s, x, y, px, color) => {
 
 // ---------- 3. build the card ----------
 const stats = [
-  ["TOTAL", total],
-  ["COMMITS", t.commits],
-  ["PULL REQS", t.prs],
-  ["ISSUES", t.issues],
-  ["PRIVATE", t.private],
+  ["COMMITS", String(commitsAll)],
+  ["PULL REQS", String(prs)],
+  ["STARS", String(stars)],
+  ["BEST STREAK", `${best}D`],
 ];
 
 const themes = {
@@ -121,21 +157,20 @@ const themes = {
 
 const W = 1080, H = 108, PAD = 30;
 const colW = (W - PAD * 2) / stats.length;
+const NUM_PX = 5;     // number size
+const LABEL_PX = 2.5; // label size (use 2 for even smaller)
+const LABEL_Y = 66;
+const NUM_Y = LABEL_Y - 8 - 7 * NUM_PX;
 
 const build = (c) => {
   let body = "";
-  // one size for every number, picked so the widest one leaves a clear gap
-  const widest = Math.max(...stats.map(([, v]) => String(v).length));
-  let px = 5;
-  while (textWidth("0".repeat(widest), px) > colW - 44 && px > 3) px--;
-  const valueTop = 64 - 8 - 7 * px; // number sits just above the label
-
   stats.forEach(([label, value], i) => {
     const x = PAD + i * colW;
-    body += drawText(String(value), x, valueTop, px, c.value);
-    body += drawText(label, x, 64, 3, c.label);
+    body += drawText(value, x, NUM_Y, NUM_PX, c.value);
+    body += drawText(label, x, LABEL_Y, LABEL_PX, c.label);
   });
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="All-time contributions: ${total} total, ${t.commits} commits, ${t.prs} pull requests, ${t.issues} issues, ${t.private} private" shape-rendering="crispEdges">
+  const aria = stats.map(([l, v]) => `${v} ${l.toLowerCase()}`).join(", ");
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${aria}" shape-rendering="crispEdges">
 <rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="14" fill="${c.bg}" stroke="${c.border}" stroke-width="2"/>
 ${body}
 </svg>`;
@@ -144,4 +179,4 @@ ${body}
 mkdirSync("assets", { recursive: true });
 writeFileSync("assets/stats-dark.svg", build(themes.dark));
 writeFileSync("assets/stats-light.svg", build(themes.light));
-console.log("Stats:", { total, ...t });
+console.log("Stats:", { commitsAll, prs, stars, best });
