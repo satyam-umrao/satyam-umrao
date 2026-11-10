@@ -2,7 +2,6 @@
 <source media="(prefers-color-scheme: light)" srcset="https://www.gitskins.com/api/section/pixel-room?username=satyam-umrao&mode=light" />
 <img src="https://www.gitskins.com/api/section/pixel-room?username=satyam-umrao&mode=dark" width="100%" alt="Satyam Umrao's pixel studio" />
 </picture>
-<sub>The window shows the weather in Kanpur, Uttar Pradesh, India right now. The monitor scrolls my latest commits; the shelf holds a book for each language I write.</sub>
 
 <a href="https://github.com/satyam-umrao">GitHub</a> · <a href="https://portfolio.satyamumrao.in">Website</a> · <a href="https://x.com/SatyamUmrao_">X</a>
 
@@ -23,4 +22,4 @@
 <a href="https://github.com/satyam-umrao/Java"><picture><source media="(prefers-color-scheme: light)" srcset="https://www.gitskins.com/api/section/pixel-card?username=satyam-umrao&i=3&r=Java&mode=light" /><img src="https://www.gitskins.com/api/section/pixel-card?username=satyam-umrao&i=3&r=Java&mode=dark" width="49%" alt="Java: All important java programs ☕" /></picture></a>
 <!--PROJECTS:END-->
 
-<sub>Pixel Studio · made with <a href="https://www.gitskins.com/readme-generator">GitSkins</a></sub>
+
