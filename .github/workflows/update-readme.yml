@@ -32,7 +32,7 @@ jobs:
           if [[ -n "$(git status --porcelain)" ]]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add README.md
+            git add README.md assets
             git commit -m "chore: refresh README"
             git push
           fi
