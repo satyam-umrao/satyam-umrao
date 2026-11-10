@@ -5,10 +5,12 @@
 
 <a href="https://github.com/satyam-umrao">GitHub</a> · <a href="https://portfolio.satyamumrao.in">Website</a> · <a href="https://x.com/SatyamUmrao_">X</a>
 
+<!--STATS:START-->
 <picture>
-<source media="(prefers-color-scheme: light)" srcset="https://www.gitskins.com/api/section/pixel-hud?username=satyam-umrao&mode=light" />
-<img src="https://www.gitskins.com/api/section/pixel-hud?username=satyam-umrao&mode=dark" width="100%" alt="Commits, pull requests, stars and best streak" />
+<source media="(prefers-color-scheme: light)" srcset="assets/stats-light.svg" />
+<img src="assets/stats-dark.svg" width="100%" alt="All-time contributions including private" />
 </picture>
+<!--STATS:END-->
 
 <picture>
 <source media="(prefers-color-scheme: light)" srcset="https://www.gitskins.com/api/section/pixel-header?username=satyam-umrao&title=%3E+Projects&mode=light" />
@@ -21,11 +23,3 @@
 <a href="https://github.com/satyam-umrao/github-profile-readme-maker"><picture><source media="(prefers-color-scheme: light)" srcset="https://www.gitskins.com/api/section/pixel-card?username=satyam-umrao&i=2&r=github-profile-readme-maker&mode=light" /><img src="https://www.gitskins.com/api/section/pixel-card?username=satyam-umrao&i=2&r=github-profile-readme-maker&mode=dark" width="49%" alt="github-profile-readme-maker: " /></picture></a>
 <a href="https://github.com/satyam-umrao/Java"><picture><source media="(prefers-color-scheme: light)" srcset="https://www.gitskins.com/api/section/pixel-card?username=satyam-umrao&i=3&r=Java&mode=light" /><img src="https://www.gitskins.com/api/section/pixel-card?username=satyam-umrao&i=3&r=Java&mode=dark" width="49%" alt="Java: All important java programs ☕" /></picture></a>
 <!--PROJECTS:END-->
-
-<!--STATS:START-->
-<picture>
-<source media="(prefers-color-scheme: light)" srcset="assets/stats-light.svg" />
-<img src="assets/stats-dark.svg" width="100%" alt="All-time contributions including private" />
-</picture>
-<!--STATS:END-->
-
