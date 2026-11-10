@@ -124,13 +124,15 @@ const colW = (W - PAD * 2) / stats.length;
 
 const build = (c) => {
   let body = "";
+  // one size for every number, picked so the widest one leaves a clear gap
+  const widest = Math.max(...stats.map(([, v]) => String(v).length));
+  let px = 7;
+  while (textWidth("0".repeat(widest), px) > colW - 44 && px > 3) px--;
+  const valueTop = 98 - 14 - 7 * px; // number sits just above the label
+
   stats.forEach(([label, value], i) => {
     const x = PAD + i * colW;
-    const str = String(value);
-    let px = 8;
-    while (textWidth(str, px) > colW - 16 && px > 3) px--;
-    const valueTop = 26 + (8 - px) * 3.5; // keep the number visually centred
-    body += drawText(str, x, valueTop, px, c.value);
+    body += drawText(String(value), x, valueTop, px, c.value);
     body += drawText(label, x, 98, 3, c.label);
   });
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="All-time contributions: ${total} total, ${t.commits} commits, ${t.prs} pull requests, ${t.issues} issues, ${t.private} private" shape-rendering="crispEdges">
