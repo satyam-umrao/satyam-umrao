@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 const USER = "satyam-umrao";
 
 // Featured projects, shown in this order. Add or remove names to change the cards.
-const FEATURED = ["ToolNest-AI", "caffora", "satyamtechlabs", "portfolio-website"];
+const FEATURED = ["ToolNest-AI", "caffora", "Gallery_app", "Java"];
 
 const headers = {
   Accept: "application/vnd.github+json",
