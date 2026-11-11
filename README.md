@@ -16,6 +16,8 @@
 <!--PROJECTS:START-->
 <a href="https://github.com/satyam-umrao/ToolNest-AI"><picture><source media="(prefers-color-scheme: light)" srcset="assets/cards/toolnest-ai-light.svg" /><img src="assets/cards/toolnest-ai-dark.svg" width="49%" alt="ToolNest-AI" /></picture></a>
 <a href="https://github.com/satyam-umrao/caffora"><picture><source media="(prefers-color-scheme: light)" srcset="assets/cards/caffora-light.svg" /><img src="assets/cards/caffora-dark.svg" width="49%" alt="caffora" /></picture></a>
+<a href="https://github.com/satyam-umrao/Java"><picture><source media="(prefers-color-scheme: light)" srcset="assets/cards/java-light.svg" /><img src="assets/cards/java-dark.svg" width="49%" alt="Java" /></picture></a>
+<a href="https://github.com/satyam-umrao/MyDocuStack"><picture><source media="(prefers-color-scheme: light)" srcset="assets/cards/mydocustack-light.svg" /><img src="assets/cards/mydocustack-dark.svg" width="49%" alt="MyDocuStack" /></picture></a>
 <!--PROJECTS:END-->
 
 <div align="left">
