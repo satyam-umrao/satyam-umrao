@@ -5,7 +5,7 @@ const USER = "satyam-umrao";
 const NAME = "SATYAM UMRAO";
 const CITY = "KANPUR";
 const LAT = 26.4499, LON = 80.3319;
-const FEATURED = ["ToolNest-AI", "caffora", "satyamtechlabs", "portfolio-website"];
+const FEATURED = ["ToolNest-AI", "caffora", "Java", "MyDocuStack"];
 
 const STATS_TOKEN = process.env.STATS_TOKEN;
 const GH_TOKEN = process.env.GITHUB_TOKEN;
