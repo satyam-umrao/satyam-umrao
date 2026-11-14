@@ -264,7 +264,6 @@ const timeZoneLabel = clockParts.timeZoneName || TIME_ZONE;
 const isDay = weather ? weather.isDay : hr24 >= 6 && hr24 < 18;
 const twilight = isDay && (hr24 < 7 || hr24 >= 17);
 const stampTime = `${String(hr24).padStart(2, "0")}:${String(min).padStart(2, "0")}:${String(Math.floor(clockSeconds)).padStart(2, "0")} ${timeZoneLabel}`;
-const stampTime = `${String(hr24).padStart(2, "0")}:${String(min).padStart(2, "0")}:${String(Math.floor(clockSeconds)).padStart(2, "0")}`;
 
 // ================= PIXEL FONT (5x7) =================
 const FONT = Object.fromEntries(
@@ -813,8 +812,6 @@ const room = (mode) => {
 
   // updated stamp
   const stamp = `UPDATED ${localDate} ${stampTime}`;
-  // local clock time only
-  const stamp = stampTime;
   s += drawText(stamp, W - 24 - textWidth(stamp, 2), H - 22, 2, c.label);
 
   return svg(
@@ -825,7 +822,6 @@ const room = (mode) => {
     secHand +
     `<rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="14" fill="none" stroke="${c.border}" stroke-width="2"/>`,
     `${NAME}'s pixel room: a developer working at a computer, live ${CITY} weather, latest commits and local time`
-    `${NAME}'s pixel room: live ${CITY} weather, latest commits and local time`
   );
 };
 
