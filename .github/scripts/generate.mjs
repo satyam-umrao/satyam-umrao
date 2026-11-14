@@ -339,53 +339,60 @@ const ROOM = {
   },
 };
 
-// ================= THE PIXEL ROOM =================
-// ================= WEATHER ICON (for the bar) =================
-const weatherIcon = (ox, oy, c) => {
-  const k = 4;
-  const cell = (x, y, w, h, fill) =>
-    `<rect x="${ox + x * k}" y="${oy + y * k}" width="${w * k}" height="${h * k}" fill="${fill}"/>`;
-  const cl = "#9fb0c3";
-  const cloud = (dy = 0) => cell(2, 2 + dy, 5, 1, cl) + cell(1, 3 + dy, 7, 1, cl) + cell(0, 4 + dy, 9, 2, cl);
-  const disc = (cx, cy, r, fill) => {
-    let o = "";
-    for (let y = 0; y < 10; y++)
-      for (let x = 0; x < 10; x++)
-        if (Math.hypot(x - cx, y - cy) <= r) o += cell(x, y, 1, 1, fill);
-    return o;
-  };
-  const rays = [[4,0],[5,0],[4,9],[5,9],[0,4],[0,5],[9,4],[9,5],[1,1],[8,1],[1,8],[8,8]]
-    .map(([x, y]) => cell(x, y, 1, 1, "#ffe98a")).join("");
-  const drop = (x, d, fill) => `<g class="dr" style="animation-delay:-${d}s">${cell(x, 7, 1, 2, fill)}</g>`;
-  const moon = (cx, cy, r) => disc(cx, cy, r, "#f4efd0") + disc(cx + 1.8, cy - 1, r - 0.4, c.panel);
-
-  let body = "";
-  if (kind === "clear")
-    body = isDay ? `<g class="o pulse">${rays}</g>${disc(4.5, 4.5, 2.6, "#ffd84d")}` : moon(4.5, 4.5, 3.4);
-  else if (kind === "partly")
-    body = (isDay ? disc(3.5, 3.5, 2.4, "#ffd84d") : moon(3.5, 3.5, 2.8)) + `<g class="bob">${cloud(1)}</g>`;
-  else if (kind === "cloudy") body = `<g class="bob">${cloud(1)}</g>`;
-  else if (kind === "fog")
-    body = `<g class="bob">${cell(1, 2, 8, 1, cl)}${cell(0, 4, 9, 1, cl)}${cell(1, 6, 8, 1, cl)}</g>`;
-  else if (kind === "drizzle" || kind === "rain")
-    body = cloud(0) + drop(2, 0, "#7aa7e6") + drop(4, 0.4, "#7aa7e6") + drop(6, 0.8, "#7aa7e6");
-  else if (kind === "snow")
-    body = cloud(0) + drop(2, 0, "#9ec1f0") + drop(4, 0.6, "#9ec1f0") + drop(6, 1.1, "#9ec1f0");
-  else
-    body = cloud(0) +
-      `<g class="bl" style="animation-duration:1.6s">${cell(5, 6, 2, 1, "#ffd84d")}${cell(4, 7, 2, 1, "#ffd84d")}${cell(5, 8, 1, 2, "#ffd84d")}</g>`;
-  return `<g shape-rendering="crispEdges">${body}</g>`;
+// ================= THE PIXEL ROOM (finer pixels, animated) =================
+const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mix = (a, b, t) => {
+  const A = hex(a), B = hex(b);
+  return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, "0")).join("");
 };
 
-// ================= THE PIXEL ROOM (animated) =================
 const room = (mode) => {
   const c = themes[mode], P = ROOM[mode];
-  const W = 1080, H = 600, u = 6;
-  const R = (col, row, w, h, fill, op) =>
-    `<rect x="${col * u}" y="${row * u}" width="${w * u}" height="${h * u}" fill="${fill}"${op ? ` fill-opacity="${op}"` : ""}/>`;
+  const dark = mode === "dark";
+  const W = 1080, H = 540, u = 3;
+  const R = (x, y, w, h, fill, op) =>
+    `<rect x="${x * u}" y="${y * u}" width="${w * u}" height="${h * u}" fill="${fill}"${op ? ` fill-opacity="${op}"` : ""}/>`;
   const g = (cls, style, inner) => `<g class="${cls}"${style ? ` style="${style}"` : ""}>${inner}</g>`;
+  const tw = (x, y, w, fill, delay, dur) =>
+    `<rect class="tw" x="${x * u}" y="${y * u}" width="${w * u}" height="${w * u}" fill="${fill}" style="animation-delay:-${delay.toFixed(2)}s;animation-duration:${dur.toFixed(2)}s"/>`;
+  const disc = (cx, cy, r, fill, op) => {
+    let o = "";
+    for (let dy = -r; dy <= r; dy++) {
+      const hw = Math.round(Math.sqrt(r * r - dy * dy));
+      o += R(cx - hw, cy + dy, 2 * hw + 1, 1, fill, op);
+    }
+    return o;
+  };
+  const crescent = (cx, cy, r, fill) => {
+    const ox = Math.round(r * 0.55), oy = -Math.round(r * 0.25), r2 = r * 0.85;
+    let o = "";
+    for (let dy = -r; dy <= r; dy++) {
+      const hw = Math.round(Math.sqrt(r * r - dy * dy));
+      const x0 = cx - hw;
+      let x1 = cx + hw;
+      const dd = dy - oy;
+      if (Math.abs(dd) <= r2) x1 = Math.min(x1, cx + ox - Math.round(Math.sqrt(r2 * r2 - dd * dd)) - 1);
+      if (x1 >= x0) o += R(x0, cy + dy, x1 - x0 + 1, 1, fill);
+    }
+    return o;
+  };
+  const stroke = (cx, cy, ang, len, t, fill) => {
+    const seen = new Set();
+    let o = "";
+    for (let k = 0; k <= len; k += 0.5) {
+      const x = Math.round(cx + Math.sin(ang) * k), y = Math.round(cy - Math.cos(ang) * k);
+      const key = `${x},${y}`;
+      if (!seen.has(key)) { seen.add(key); o += R(x, y, t, t, fill); }
+    }
+    return o;
+  };
+
   const lh = 18, n = commitLines.length;
   const dayHr = hr24 + min / 60;
+  const curt = dark ? ["#5a2d3f", "#43202f", "#7a4258"] : ["#c98aa0", "#b0708a", "#e3a9bb"];
+  const rug = dark ? ["#2a3a5c", "#34487a", "#4a6199"] : ["#6d7fa8", "#8ea0c9", "#b0bfe0"];
+  const wain = mix(P.wallA, "#000000", 0.2);
+  const catLight = mix(P.cat, "#ffffff", 0.25);
   let s = "";
 
   // ---- animations (CSS inside the SVG)
@@ -409,10 +416,8 @@ const room = (mode) => {
 .st{opacity:0;animation:steam 2.4s ease-out infinite}
 .glow{animation:glow 4s ease-in-out infinite}
 .bl{animation:blink 1.2s steps(1) infinite}
-.sec{transform-box:view-box;transform-origin:951px 75px;animation:sweep 60s steps(60) infinite}
+.sec{transform-box:view-box;transform-origin:949.5px 73.5px;animation:sweep 60s steps(60) infinite}
 .log{animation:scroll linear infinite}
-.bob{animation:bob 2.5s ease-in-out infinite}
-.dr{animation:dr 1.2s linear infinite}
 @keyframes tw{0%,100%{opacity:.15}50%{opacity:1}}
 @keyframes drift{from{transform:translateX(-64px)}to{transform:translateX(214px)}}
 @keyframes fall{from{transform:translateY(-14px)}to{transform:translateY(184px)}}
@@ -425,96 +430,123 @@ const room = (mode) => {
 @keyframes pulse{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.12);opacity:1}}
 @keyframes sway{0%,100%{transform:rotate(-2.2deg)}50%{transform:rotate(2.2deg)}}
 @keyframes swing{0%,100%{transform:rotate(-1.4deg)}50%{transform:rotate(1.4deg)}}
-@keyframes breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.08)}}
+@keyframes breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.07)}}
 @keyframes wag{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(12deg)}}
 @keyframes zz{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(24px,-56px)}}
 @keyframes steam{0%{opacity:0;transform:translateY(0)}30%{opacity:.8}100%{opacity:0;transform:translateY(-24px)}}
 @keyframes glow{0%,100%{opacity:.55}50%{opacity:1}}
 @keyframes blink{0%{opacity:1}50%{opacity:0}}
 @keyframes sweep{to{transform:rotate(360deg)}}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-@keyframes dr{0%{transform:translateY(-2px);opacity:0}30%{opacity:1}100%{transform:translateY(6px);opacity:0}}
 @keyframes scroll{from{transform:translateY(0)}to{transform:translateY(-${n * lh}px)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}`;
 
-  let defs =
-    `<clipPath id="rc"><path d="M0,14A14,14 0 0 1 14,0H1066A14,14 0 0 1 1080,14V540H0Z"/></clipPath>` +
+  const defs =
+    `<clipPath id="rc"><rect width="${W}" height="${H}" rx="14"/></clipPath>` +
     `<clipPath id="win"><rect x="60" y="48" width="204" height="168"/></clipPath>` +
-    `<clipPath id="scr"><rect x="412" y="168" width="328" height="110"/></clipPath>`;
+    `<clipPath id="scr"><rect x="412" y="168" width="328" height="110"/></clipPath>` +
+    `<pattern id="scan" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="3" fill="#000000" fill-opacity=".22"/></pattern>`;
 
-  // ---- wall + floor
-  s += R(0, 0, 180, 74, P.wallA);
-  for (let x = 0; x < 180; x += 8) s += R(x, 0, 4, 74, P.wallB);
-  s += R(0, 74, 180, 16, P.floorA) + R(0, 72, 180, 2, P.base);
-  for (let r = 0; r < 16; r += 4) {
-    s += R(0, 74 + r, 180, 1, P.floorB);
-    for (let x = ((r / 4) % 2) * 15; x < 180; x += 30) s += R(x, 74 + r, 1, 4, P.floorB);
+  // ---- wall: striped wallpaper, wainscot, baseboard
+  s += R(0, 0, 360, 148, P.wallA);
+  for (let x = 0; x < 360; x += 8) s += R(x, 0, 4, 148, P.wallB) + R(x + 4, 0, 1, 148, mix(P.wallB, "#ffffff", 0.05));
+  s += R(0, 118, 360, 30, wain) + R(0, 117, 360, 2, mix(wain, "#ffffff", 0.18)) + R(0, 119, 360, 1, mix(wain, "#000000", 0.3));
+  for (let x = 6; x < 360; x += 30)
+    s += R(x, 124, 24, 18, mix(wain, "#000000", 0.28)) + R(x + 1, 125, 22, 16, mix(wain, "#ffffff", 0.06));
+  s += R(0, 144, 360, 4, P.base) + R(0, 144, 360, 1, mix(P.base, "#ffffff", 0.2));
+
+  // ---- floor: planks, seams, grain, rug
+  s += R(0, 148, 360, 32, P.floorA) + R(0, 148, 360, 1, mix(P.floorA, "#ffffff", 0.18));
+  for (let r = 0; r < 4; r++) {
+    const y = 148 + r * 8;
+    s += R(0, y, 360, 1, P.floorB);
+    for (let x = (r % 2) * 28; x < 360; x += 56) s += R(x, y, 1, 8, P.floorB);
   }
+  const fr = rng(3);
+  for (let i = 0; i < 70; i++)
+    s += R(Math.floor(fr() * 350), 150 + Math.floor(fr() * 28), 3 + Math.floor(fr() * 6), 1, mix(P.floorA, "#ffffff", 0.07));
+  s += R(60, 158, 210, 19, rug[0]) + R(62, 160, 206, 15, rug[1]) + R(66, 163, 198, 9, rug[0], 0.45);
+  for (let x = 70; x < 262; x += 12) s += R(x, 165, 6, 5, rug[2], 0.55);
+  for (let x = 62; x < 268; x += 4) s += R(x, 177, 2, 2, rug[0]);
+  s += R(98, 150, 190, 7, "#000000", 0.18);
 
   // ---- window: live sky
   const sk = overcast
     ? isDay ? (twilight ? ["#5d5a78", "#b78a74"] : ["#8fa3b8", "#b7c4d1"]) : ["#121827", "#1b2336"]
     : isDay ? (twilight ? ["#6c5b9e", "#f2956b"] : ["#6bb8f5", "#a8dcff"]) : ["#0a1233", "#16245a"];
-  let sky = R(10, 8, 34, 28, sk[0]) + R(10, 26, 34, 10, sk[1]);
+  const skyAt = (row) => mix(sk[0], sk[1], Math.min(1, Math.round(((row - 16) / 56) * 6) / 6));
+  let sky = "";
+  for (let r = 16; r < 72; r += 4) sky += R(20, r, 68, 4, skyAt(r));
 
   if (!isDay || twilight) {
-    const nStars = !isDay ? (overcast ? 4 : 18) : overcast ? 0 : 6;
+    const nStars = !isDay ? (overcast ? 5 : 22) : overcast ? 0 : 7;
     const rs = rng(11);
     for (let i = 0; i < nStars; i++)
-      sky += `<rect class="tw" x="${62 + Math.floor(rs() * 198)}" y="${52 + Math.floor(rs() * 84)}" width="4" height="4" fill="#ffffff" style="animation-delay:-${(rs() * 3).toFixed(2)}s;animation-duration:${(2 + rs() * 3).toFixed(2)}s"/>`;
+      sky += tw(22 + Math.floor(rs() * 64), 18 + Math.floor(rs() * 34), rs() > 0.85 ? 2 : 1, "#ffffff", rs() * 3, 2 + rs() * 3);
   }
 
   if (!overcast && isDay) {
     const f = Math.min(1, Math.max(0, (dayHr - 6) / 12));
-    const cx = Math.round(16 + f * 22), cy = Math.round(28 - Math.sin(Math.PI * f) * 14);
+    const cx = Math.round(34 + f * 40), cy = Math.round(60 - Math.sin(Math.PI * f) * 34);
     const col = twilight ? "#ffb347" : "#ffd84d";
-    let disc = "", rays = "";
-    for (let dy = -3; dy <= 3; dy++)
-      for (let dx = -3; dx <= 3; dx++) if (Math.hypot(dx, dy) <= 3.3) disc += R(cx + dx, cy + dy, 1, 1, col);
-    for (const [dx, dy] of [[0,-5],[0,5],[-5,0],[5,0],[-4,-4],[4,-4],[-4,4],[4,4]])
-      rays += R(cx + dx, cy + dy, 1, 1, "#ffe98a");
-    sky += g("o pulse", "", rays) + disc;
+    let rays = "";
+    for (const [dx, dy] of [[0, -10], [0, 9], [-10, 0], [9, 0], [-7, -7], [7, -7], [-7, 7], [7, 7]])
+      rays += R(cx + dx, cy + dy, 2, 2, "#ffe98a");
+    sky += disc(cx, cy, 10, col, 0.18) + g("o pulse", "", rays) + disc(cx, cy, 6, col) + disc(cx - 1, cy - 1, 3, "#fff3b0", 0.7);
   }
   if (!overcast && !isDay) {
-    const f = Math.min(1, (dayHr >= 18 ? dayHr - 18 : dayHr + 6) / 12);
-    const cx = Math.round(16 + f * 22), cy = Math.round(28 - Math.sin(Math.PI * f) * 14);
-    const cut = cy >= 24 ? sk[1] : sk[0];
-    for (let dy = -3; dy <= 3; dy++)
-      for (let dx = -3; dx <= 3; dx++) if (Math.hypot(dx, dy) <= 3.3) sky += R(cx + dx, cy + dy, 1, 1, "#f4efd0");
-    for (let dy = -3; dy <= 3; dy++)
-      for (let dx = -3; dx <= 3; dx++) if (Math.hypot(dx - 2, dy + 1) <= 2.7) sky += R(cx + dx, cy + dy, 1, 1, cut);
+    const f = Math.min(1, Math.max(0, (dayHr >= 18 ? dayHr - 18 : dayHr + 6) / 12));
+    const cx = Math.round(34 + f * 40), cy = Math.round(58 - Math.sin(Math.PI * f) * 30);
+    sky += disc(cx, cy, 9, "#f4efd0", 0.1) + crescent(cx, cy, 5, "#f4efd0");
   }
 
+  // distant skyline
+  const city = rng(9);
+  const bcol = isDay ? mix(sk[1], "#35506e", overcast ? 0.7 : 0.55) : "#0a0f1f";
+  let sx = 20;
+  while (sx < 88) {
+    const bw = Math.min(4 + Math.floor(city() * 4), 88 - sx);
+    const bh = 6 + Math.floor(city() * 9), top = 72 - bh;
+    sky += R(sx, top, bw, bh, bcol);
+    for (let wy = top + 2; wy < 70; wy += 3)
+      for (let wx = sx + 1; wx < sx + bw - 1; wx += 2) {
+        const v = city();
+        if (!isDay && v > 0.6) sky += v > 0.93 ? tw(wx, wy, 1, "#f2c14e", city() * 3, 3) : R(wx, wy, 1, 1, "#f2c14e", 0.9);
+        else if (isDay && v > 0.85) sky += R(wx, wy, 1, 1, mix(bcol, "#ffffff", 0.25));
+      }
+    sx += bw + (city() > 0.6 ? 1 : 0);
+  }
+  sky += R(20, 70, 68, 2, mix(bcol, "#000000", 0.35));
+
   if (kind === "fog")
-    for (let i = 0; i < 3; i++)
-      sky += g("fog", `animation-delay:-${i * 2.5}s`, R(6, 14 + i * 7, 42, 2, "#ffffff", 0.3));
+    for (let i = 0; i < 3; i++) sky += g("fog", `animation-delay:-${i * 2.5}s`, R(16, 36 + i * 7, 76, 3, "#ffffff", 0.3));
 
   const nCloud = { clear: 1, partly: 2, cloudy: 4, fog: 0, drizzle: 4, rain: 4, snow: 4, storm: 4 }[kind];
   const cc = overcast
     ? isDay ? (["drizzle", "rain", "storm"].includes(kind) ? "#6f7b8b" : "#98a4b3") : "#2a3144"
     : isDay ? "#ffffff" : "#3a4770";
+  const csh = mix(cc, "#000000", 0.18);
   const cr = rng(21);
   for (let i = 0; i < nCloud; i++) {
-    const row = 9 + Math.floor(cr() * 14);
+    const y = 18 + Math.floor(cr() * 22);
     const big = overcast || i % 2 === 0;
-    const body = big
-      ? R(11, row, 7, 1, cc, 0.95) + R(10, row + 1, 10, 2, cc, 0.95)
-      : R(11, row, 5, 1, cc, 0.95) + R(10, row + 1, 8, 2, cc, 0.95);
+    const shape = big
+      ? R(26, y, 6, 1, cc) + R(23, y + 1, 12, 1, cc) + R(21, y + 2, 18, 2, cc) + R(21, y + 4, 18, 1, csh)
+      : R(25, y, 5, 1, cc) + R(22, y + 1, 10, 1, cc) + R(20, y + 2, 14, 2, cc) + R(20, y + 4, 14, 1, csh);
     const d = 40 + cr() * 40;
-    sky += g("cl", `animation-duration:${d.toFixed(1)}s;animation-delay:-${(cr() * d).toFixed(1)}s`, body);
+    sky += g("cl", `animation-duration:${d.toFixed(1)}s;animation-delay:-${(cr() * d).toFixed(1)}s`, shape);
   }
 
   const nDrops = { drizzle: 10, rain: 24, storm: 30 }[kind] ?? 0;
   const dr = rng(33);
   for (let i = 0; i < nDrops; i++) {
     const dur = 0.55 + dr() * 0.45;
-    sky += `<rect class="rd" x="${60 + Math.floor(dr() * 200)}" y="48" width="3" height="10" fill="#8fb4ee" fill-opacity=".85" style="animation-duration:${dur.toFixed(2)}s;animation-delay:-${(dr() * dur).toFixed(2)}s"/>`;
+    sky += `<rect class="rd" x="${60 + Math.floor(dr() * 200)}" y="48" width="3" height="9" fill="#8fb4ee" fill-opacity=".85" style="animation-duration:${dur.toFixed(2)}s;animation-delay:-${(dr() * dur).toFixed(2)}s"/>`;
   }
   if (kind === "snow") {
     const sr = rng(44);
     for (let i = 0; i < 18; i++) {
       const dur = 4 + sr() * 4;
-      sky += `<rect class="sn" x="${60 + Math.floor(sr() * 196)}" y="48" width="4" height="4" fill="#ffffff" style="animation-duration:${dur.toFixed(1)}s;animation-delay:-${(sr() * dur).toFixed(1)}s"/>`;
+      sky += `<rect class="sn" x="${60 + Math.floor(sr() * 196)}" y="48" width="3" height="3" fill="#ffffff" style="animation-duration:${dur.toFixed(1)}s;animation-delay:-${(sr() * dur).toFixed(1)}s"/>`;
     }
   }
   if (kind === "storm") sky += `<rect class="bolt" x="60" y="48" width="204" height="168" fill="#ffffff"/>`;
@@ -522,74 +554,104 @@ const room = (mode) => {
   if (isDay && !twilight && !overcast) {
     const bc = "#2b3a55";
     sky += g("fly", "animation-duration:24s;animation-delay:-7s",
-      g("fa", "", R(10, 16, 1, 1, bc) + R(11, 17, 1, 1, bc) + R(12, 16, 1, 1, bc)) +
-      g("fb", "", R(10, 17, 1, 1, bc) + R(11, 16, 1, 1, bc) + R(12, 17, 1, 1, bc)));
+      g("fa", "", R(30, 28, 2, 1, bc) + R(32, 29, 2, 1, bc) + R(34, 28, 2, 1, bc)) +
+      g("fb", "", R(30, 29, 2, 1, bc) + R(32, 28, 2, 1, bc) + R(34, 29, 2, 1, bc)));
   }
 
-  s += R(6, 38, 42, 2, P.sill) + R(8, 6, 38, 32, P.frame);
+  // window frame, glass, mullions, sill
+  s += R(16, 12, 76, 64, P.frame) + R(16, 12, 76, 2, mix(P.frame, "#ffffff", 0.2)) + R(16, 74, 76, 2, mix(P.frame, "#000000", 0.3));
   s += `<g clip-path="url(#win)">${sky}</g>`;
-  s += R(26, 8, 2, 28, P.frame) + R(10, 21, 34, 2, P.frame);
+  s += R(52, 16, 4, 56, P.frame) + R(52, 16, 1, 56, mix(P.frame, "#ffffff", 0.2));
+  s += R(20, 42, 68, 4, P.frame) + R(20, 42, 68, 1, mix(P.frame, "#ffffff", 0.2));
+  s += R(10, 76, 88, 4, P.sill) + R(10, 76, 88, 1, mix(P.sill, "#ffffff", 0.2)) + R(10, 80, 88, 2, mix(P.sill, "#000000", 0.35));
+  if (weather) {
+    const lab = `${weather.temp}C ${KIND_LABEL[kind]}`;
+    s += drawText(lab, Math.round(162 - textWidth(lab, 2) / 2), 254, 2, c.label);
+  }
 
-  // ---- hanging name plate (swings)
+  // curtains + rod
+  s += R(2, 8, 104, 2, P.sill) + R(0, 7, 3, 4, P.sill) + R(105, 7, 3, 4, P.sill);
+  for (const x0 of [6, 90]) {
+    s += R(x0, 10, 12, 68, curt[0]);
+    for (let i = 0; i < 4; i++) s += R(x0 + i * 3 + 1, 10, 1, 68, curt[1]) + R(x0 + i * 3 + 2, 10, 1, 68, curt[2], 0.55);
+    s += R(x0, 46, 12, 3, mix(curt[2], "#ffffff", 0.2)) + R(x0, 78, 12, 2, curt[1]);
+  }
+
+  // fairy lights at night
+  if (!isDay) {
+    const cols = ["#ff6b6b", "#ffd84d", "#6bcb77", "#4d96ff", "#c77dff"];
+    let wire = "", bulbs = "";
+    for (let i = 0; i <= 26; i++) {
+      const x = Math.round(4 + i * 13.4), y = 3 + Math.round(2 * Math.sin(i * 0.9));
+      wire += R(x, y, 14, 1, "#2b2b33");
+      bulbs += R(x + 5, y + 1, 2, 3, cols[i % 5]) + tw(x + 4, y + 4, 1, cols[i % 5], (i * 0.37) % 3, 2.2 + (i % 3) * 0.6);
+    }
+    s += wire + bulbs;
+  }
+
+  // hanging name plate (swings)
   const plate =
-    R(80, 0, 1, 5, P.plateEdge) + R(98, 0, 1, 5, P.plateEdge) +
-    R(62, 5, 56, 11, P.plateEdge) + R(63, 6, 54, 9, P.plate) +
-    drawText(NAME, 62 * u + (56 * u - textWidth(NAME, 4)) / 2, 6 * u + (9 * u - 28) / 2, 4, P.plateText);
+    R(160, 0, 1, 10, P.plateEdge) + R(196, 0, 1, 10, P.plateEdge) +
+    R(124, 10, 112, 22, mix(P.plateEdge, "#000000", 0.2)) + R(125, 11, 110, 20, P.plateEdge) + R(127, 13, 106, 16, P.plate) +
+    R(126, 12, 2, 2, "#8a8478") + R(232, 12, 2, 2, "#8a8478") + R(126, 28, 2, 2, "#8a8478") + R(232, 28, 2, 2, "#8a8478") +
+    drawText(NAME, 124 * u + (112 * u - textWidth(NAME, 4)) / 2, 10 * u + (22 * u - 28) / 2, 4, P.plateText);
   s += `<g class="swing">${plate}</g>`;
 
-  // ---- clock (time of the last update + sweeping second hand)
-  const ccx = 158, ccy = 12;
-  for (let y = -6; y <= 6; y++)
-    for (let x = -6; x <= 6; x++) {
-      const d = Math.hypot(x, y);
-      if (d <= 6.2) s += R(ccx + x, ccy + y, 1, 1, d > 5 ? P.clockRing : P.clockFace);
-    }
-  const hand = (ang, len) => {
-    const seen = new Set();
-    let o = "";
-    for (let t = 0; t <= len; t += 0.5) {
-      const x = Math.round(ccx + Math.sin(ang) * t), y = Math.round(ccy - Math.cos(ang) * t);
-      const key = `${x},${y}`;
-      if (!seen.has(key)) { seen.add(key); o += R(x, y, 1, 1, P.hand); }
-    }
-    return o;
-  };
-  s += hand((min / 60) * 2 * Math.PI, 4.5);
-  s += hand((((hr24 % 12) + min / 60) / 12) * 2 * Math.PI, 3);
-  const secHand = `<line class="sec" x1="951" y1="75" x2="951" y2="42" stroke="#d1453b" stroke-width="2"/><rect x="948" y="72" width="6" height="6" fill="#d1453b"/>`;
+  // poster
+  s += R(252, 10, 40, 34, P.frame) + R(254, 12, 36, 30, "#1b2a41") + R(254, 12, 36, 1, "#ffffff", 0.08);
+  s += drawText("</>", 254 * u + Math.round((36 * u - textWidth("</>", 2)) / 2), 12 * u + 38, 2, "#3fb950");
 
-  // ---- shelves: one book per language, mug with steam, picture
-  s += R(126, 40, 52, 2, P.shelf) + R(126, 42, 52, 1, P.shelfDark);
-  let bx = 129;
+  // clock (time of last update + sweeping second hand)
+  const ccx = 316, ccy = 24;
+  s += disc(ccx, ccy, 13, mix(P.clockRing, "#000000", 0.25)) + disc(ccx, ccy, 12, P.clockRing) + disc(ccx, ccy, 10, P.clockFace);
+  for (const [dx, dy] of [[0, -9], [9, 0], [0, 9], [-9, 0]]) s += R(ccx + dx, ccy + dy, 2, 2, P.hand);
+  s += stroke(ccx, ccy, (min / 60) * 2 * Math.PI, 8, 2, P.hand);
+  s += stroke(ccx, ccy, (((hr24 % 12) + min / 60) / 12) * 2 * Math.PI, 5, 2, P.hand);
+  s += R(ccx - 1, ccy - 1, 3, 3, P.hand);
+  const secHand = `<line class="sec" x1="949.5" y1="73.5" x2="949.5" y2="40" stroke="#d1453b" stroke-width="1.5"/><rect x="947.5" y="71.5" width="4" height="4" fill="#d1453b"/>`;
+
+  // shelves: one book per language, succulent, mug with steam, picture
+  s += R(252, 80, 104, 4, P.shelf) + R(252, 80, 104, 1, mix(P.shelf, "#ffffff", 0.2)) + R(252, 84, 104, 2, P.shelfDark);
+  s += R(260, 86, 3, 8, P.shelfDark) + R(344, 86, 3, 8, P.shelfDark);
+  let bx = 256;
   for (const l of langs) {
     const h = hash(l);
-    const w = 3 + (h % 2), bh = 7 + (h % 4);
-    if (bx + w > 175) break;
-    s += R(bx, 40 - bh, w, bh, langColor(l)) + R(bx, 40 - bh + 2, w, 1, "#000000", 0.25) + R(bx, 38, w, 1, "#000000", 0.25);
-    bx += w + 1;
+    const bw = 5 + (h % 3), bh = 14 + ((h >> 3) % 9);
+    if (bx + bw > 340) break;
+    s += R(bx, 80 - bh, bw, bh, langColor(l)) + R(bx, 80 - bh, bw, 1, "#ffffff", 0.2) + R(bx + bw - 1, 80 - bh, 1, bh, "#000000", 0.25);
+    s += R(bx + 1, 80 - bh + 3, bw - 2, 1, "#ffffff", 0.4) + R(bx + 1, 80 - 5, bw - 2, 1, "#ffffff", 0.4);
+    bx += bw + 1;
   }
-  s += R(138, 54, 40, 2, P.shelf) + R(138, 56, 40, 1, P.shelfDark);
-  s += R(142, 50, 4, 4, P.mug) + R(146, 51, 1, 2, P.mug);
-  for (const [col, d] of [[142, 0], [144, -0.8], [145, -1.6]])
-    s += g("st", `animation-delay:${d}s`, R(col, 48, 1, 1, "#ffffff", 0.8));
-  s += R(158, 49, 10, 5, P.frame) + R(159, 50, 8, 3, P.leaf2, 0.5);
+  if (bx + 12 <= 352)
+    s += R(bx + 2, 74, 8, 6, P.pot) + R(bx + 3, 70, 2, 4, P.leaf2) + R(bx + 6, 68, 2, 6, P.leaf2) + R(bx + 8, 71, 2, 3, P.leaf1);
+  s += R(276, 108, 80, 4, P.shelf) + R(276, 108, 80, 1, mix(P.shelf, "#ffffff", 0.2)) + R(276, 112, 80, 2, P.shelfDark);
+  s += R(284, 114, 3, 8, P.shelfDark) + R(346, 114, 3, 8, P.shelfDark);
+  s += R(286, 100, 8, 8, P.mug) + R(294, 102, 2, 4, P.mug) + R(287, 101, 6, 1, "#6b4a33") + R(286, 106, 8, 2, mix(P.mug, "#000000", 0.15));
+  for (const [x, d] of [[288, 0], [290, -0.8], [292, -1.6]]) s += g("st", `animation-delay:${d}s`, R(x, 95, 1, 3, "#ffffff", 0.8));
+  s += R(318, 94, 24, 14, P.frame) + R(320, 96, 20, 10, "#2f5d62") + R(320, 102, 20, 4, "#3b7a57") + R(331, 98, 3, 3, "#ffd84d");
 
-  // ---- plant (sways)
-  let plant = R(37, 50, 2, 17, P.leaf1);
-  for (const [cx, cy, w, h] of [[32, 56, 5, 2], [40, 53, 6, 2], [31, 60, 6, 2], [41, 59, 6, 2], [35, 48, 6, 3], [36, 63, 4, 2]])
-    plant += R(cx, cy, w, h, P.leaf2) + R(cx, cy + h - 1, w, 1, P.leaf1);
-  s += g("plant o", "", plant) + R(33, 66, 12, 2, P.pot) + R(34, 68, 10, 6, P.pot) + R(34, 72, 10, 2, P.potDark);
+  // plant (sways)
+  let plant = R(78, 100, 3, 36, P.leaf1);
+  for (const [lx, ly, lw, lhh] of [[66, 108, 12, 3], [82, 104, 12, 3], [64, 116, 14, 3], [82, 114, 14, 3], [68, 124, 10, 3], [82, 122, 12, 3], [72, 95, 10, 4]])
+    plant += R(lx, ly, lw, lhh, P.leaf2) + R(lx, ly + lhh - 1, lw, 1, P.leaf1) + R(lx + 1, ly, lw - 3, 1, mix(P.leaf2, "#ffffff", 0.25));
+  s += g("plant o", "", plant);
+  s += R(66, 134, 26, 3, mix(P.pot, "#ffffff", 0.15)) + R(68, 137, 22, 13, P.pot) + R(68, 146, 22, 4, P.potDark) + R(68, 137, 22, 2, "#2b1d12");
 
-  // ---- desk + glowing lamp
-  s += R(50, 57, 92, 3, P.desk) + R(50, 60, 92, 1, P.deskDark);
-  s += R(57, 61, 78, 13, "#000000", 0.18) + R(54, 61, 3, 13, P.deskDark) + R(136, 61, 3, 13, P.deskDark);
-  s += g("glow", "", R(49, 42, 18, 14, P.lamp, 0.22) + R(52, 44, 12, 10, P.lamp, 0.22));
-  s += R(54, 37, 7, 1, P.lamp) + R(52, 38, 11, 3, P.lamp) + R(51, 41, 13, 1, P.lamp);
-  s += R(57, 42, 2, 14, P.lampDark) + R(54, 56, 8, 1, P.lampDark);
+  // desk
+  s += R(100, 114, 184, 6, P.desk) + R(100, 114, 184, 1, mix(P.desk, "#ffffff", 0.2)) + R(100, 120, 184, 3, P.deskDark);
+  s += R(114, 123, 156, 27, "#000000", 0.15);
+  s += R(108, 123, 6, 35, P.deskDark) + R(270, 123, 6, 35, P.deskDark) + R(108, 123, 1, 35, mix(P.deskDark, "#ffffff", 0.15));
+  s += R(238, 123, 32, 30, mix(P.desk, "#000000", 0.15));
+  for (const dy of [125, 139]) s += R(240, dy, 28, 12, P.desk) + R(240, dy, 28, 1, mix(P.desk, "#ffffff", 0.2)) + R(250, dy + 5, 8, 2, "#d9c9a8");
 
-  // ---- monitor with scrolling commits
-  s += R(66, 22, 60, 28, P.bezel) + R(68, 24, 56, 23, P.screen);
-  s += R(94, 50, 4, 5, P.bezel) + R(86, 55, 20, 2, P.bezel) + R(106, 55, 16, 2, P.bezel);
+  // lamp with glow
+  s += g("glow", "", R(106, 82, 22, 4, P.lamp, 0.1) + R(102, 86, 30, 6, P.lamp, 0.07) + R(98, 92, 38, 8, P.lamp, 0.05) + R(94, 100, 46, 10, P.lamp, 0.04));
+  s += R(112, 72, 10, 2, P.lamp) + R(110, 74, 14, 2, P.lamp) + R(108, 76, 18, 2, P.lamp) + R(106, 78, 22, 2, P.lamp) + R(104, 80, 26, 2, mix(P.lamp, "#000000", 0.2));
+  s += R(116, 82, 3, 28, P.lampDark) + R(108, 110, 18, 4, P.lampDark) + R(110, 109, 14, 1, mix(P.lampDark, "#ffffff", 0.2));
+
+  // monitor with scrolling commits
+  s += R(132, 44, 120, 56, P.bezel) + R(134, 46, 116, 52, mix(P.bezel, "#ffffff", 0.08)) + R(136, 48, 112, 46, P.screen);
+  s += R(190, 97, 4, 1, "#3fb950") + R(188, 100, 8, 9, P.bezel) + R(170, 109, 44, 3, P.bezel) + R(170, 109, 44, 1, mix(P.bezel, "#ffffff", 0.15));
   s += drawText("~/COMMITS", 418, 149, 2, "#2f8f4a");
   s += drawText("LIVE", 670, 149, 2, "#ff7b72") + `<rect class="bl" x="724" y="150" width="8" height="8" fill="#ff5f56"/>`;
   s += `<rect x="412" y="166" width="328" height="1" fill="#1d3b27"/>`;
@@ -600,43 +662,42 @@ const room = (mode) => {
       rows += `<text x="420" y="${186 + (k * n + i) * lh}" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="12" fill="${P.code}">${esc(clip("> " + l, 42))}</text>`;
     });
   s += `<g clip-path="url(#scr)"><g${n >= 2 ? ` class="log" style="animation-duration:${Math.max(8, n * 2.4)}s"` : ""}>${rows}</g></g>`;
+  s += `<rect x="408" y="144" width="336" height="138" fill="url(#scan)"/>`;
 
-  // ---- chair
-  s += R(102, 61, 16, 10, P.chair) + R(103, 62, 14, 1, P.chairHi) + R(109, 71, 2, 2, P.chair) + R(103, 73, 14, 1, P.chair);
+  // keyboard, mouse, book stack
+  s += R(146, 111, 56, 3, "#1b2130");
+  for (let i = 0; i < 13; i++) s += R(147 + i * 4, 112, 2, 1, "#3a4458");
+  s += R(210, 111, 7, 3, "#1b2130") + R(212, 111, 3, 1, "#3a4458");
+  s += R(244, 108, 24, 6, "#3b6fb4") + R(246, 102, 20, 6, "#d9a441") + R(248, 97, 16, 5, "#b4533a") + R(245, 110, 22, 1, "#ffffff", 0.5);
 
-  // ---- sleeping cat (breathes, tail wags, Zs float up)
-  s += R(140, 77, 28, 1, "#000000", 0.2);
+  // chair
+  s += R(198, 124, 32, 22, P.chair) + R(200, 126, 28, 2, P.chairHi) + R(213, 128, 2, 16, P.chairHi);
+  s += R(194, 146, 40, 6, P.chair) + R(194, 146, 40, 1, P.chairHi) + R(212, 152, 4, 6, P.lampDark);
+  s += R(200, 157, 32, 2, P.lampDark) + R(200, 159, 4, 2, P.lampDark) + R(228, 159, 4, 2, P.lampDark);
+
+  // sleeping cat (breathes, tail wags, Zs float up)
+  s += R(280, 155, 58, 2, "#000000", 0.2);
   const cat =
-    R(146, 70, 16, 7, P.cat) + R(150, 70, 2, 7, P.catDark) + R(155, 70, 2, 7, P.catDark) +
-    R(141, 72, 6, 5, P.cat) + R(141, 70, 2, 2, P.cat) + R(145, 70, 2, 2, P.cat) + R(142, 74, 2, 1, P.catDark);
-  s += g("cat o", "", cat) + g("tail o", "", R(162, 73, 5, 3, P.cat));
-  for (const [x, y, px, d] of [[852, 404, 3, 0], [872, 392, 2, -1.3], [892, 380, 2, -2.6]])
+    R(296, 142, 32, 13, P.cat) + R(298, 142, 28, 2, catLight) + R(296, 153, 32, 2, P.catDark) +
+    R(304, 142, 3, 13, P.catDark) + R(312, 142, 3, 13, P.catDark) + R(320, 142, 3, 13, P.catDark) +
+    R(282, 146, 16, 9, P.cat) + R(284, 146, 12, 1, catLight) +
+    R(282, 142, 4, 4, P.cat) + R(283, 143, 2, 2, "#e8a0a8") + R(292, 142, 4, 4, P.cat) + R(293, 143, 2, 2, "#e8a0a8") +
+    R(285, 150, 4, 1, "#2b1d12") + R(291, 150, 4, 1, "#2b1d12") + R(288, 152, 2, 1, "#e8a0a8") + R(286, 153, 8, 2, catLight);
+  s += g("cat o", "", cat);
+  s += g("tail o", "", R(328, 148, 12, 5, P.cat) + R(336, 145, 4, 4, P.cat) + R(332, 148, 2, 5, P.catDark));
+  for (const [x, y, px, d] of [[850, 416, 3, 0], [872, 400, 2, -1.3], [894, 384, 2, -2.6]])
     s += g("zz", `animation-delay:${d}s`, drawText("Z", x, y, px, c.label));
 
-  // ---- weather bar under the room
-  const y0 = 548, bh = 44;
-  let hud = `<rect x="12" y="${y0}" width="1056" height="${bh}" rx="8" fill="${c.panel}" stroke="${c.border}" stroke-width="2"/>`;
-  const col = (x, label, value) => drawText(label, x, y0 + 5, 2, c.label) + drawText(value, x, y0 + 21, 3, c.value);
-  if (weather) {
-    const t = `${weather.temp}C`;
-    hud += weatherIcon(26, y0 + 2, c);
-    hud += drawText(t, 80, y0 + 5, 5, c.value);
-    hud += drawText(KIND_LABEL[kind], 80 + textWidth(t, 5) + 16, y0 + 12, 3, c.green);
-    hud += `<rect x="345" y="${y0 + 8}" width="2" height="${bh - 16}" fill="${c.border}"/>`;
-    hud += col(365, "HUMIDITY", `${weather.humidity}%`);
-    hud += col(530, "WIND", `${weather.wind} KMH`);
-    hud += col(690, "FEELS LIKE", `${weather.feels}C`);
-  } else {
-    hud += drawText("WEATHER OFFLINE", 30, y0 + 12, 3, c.label);
-  }
-  hud += col(850, "UPDATED", stampTime);
+  // updated stamp
+  const stamp = `UPDATED ${now.toISOString().slice(0, 10)} ${stampTime}`;
+  s += drawText(stamp, W - 24 - textWidth(stamp, 2), H - 22, 2, c.label);
 
   return svg(
     W, H,
     `<defs><style>${css}</style>${defs}</defs>` +
     `<rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="14" fill="${c.bg}"/>` +
     `<g clip-path="url(#rc)" shape-rendering="crispEdges">${s}</g>` +
-    secHand + hud +
+    secHand +
     `<rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="14" fill="none" stroke="${c.border}" stroke-width="2"/>`,
     `${NAME}'s pixel room: live ${CITY} weather, latest commits and languages`
   );
