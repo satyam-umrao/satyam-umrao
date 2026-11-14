@@ -2,7 +2,7 @@ name: Update README
 
 on:
   schedule:
-    - cron: "0 */3 * * *"   # every 3 hours
+    - cron: "0 * * * *"   # every 3 hours
   workflow_dispatch:
   push:
     branches: [main]
