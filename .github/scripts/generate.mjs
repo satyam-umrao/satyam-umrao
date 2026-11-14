@@ -254,6 +254,7 @@ const clockParts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
   timeZone: TIME_ZONE,
   year: "numeric", month: "2-digit", day: "2-digit",
   hour: "2-digit", minute: "2-digit", second: "2-digit", timeZoneName: "short", hourCycle: "h23",
+  hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
 }).formatToParts(now).map(({ type, value }) => [type, value]));
 const localDate = `${clockParts.year}-${clockParts.month}-${clockParts.day}`;
 const hr24 = Number(clockParts.hour);
@@ -263,6 +264,7 @@ const timeZoneLabel = clockParts.timeZoneName || TIME_ZONE;
 const isDay = weather ? weather.isDay : hr24 >= 6 && hr24 < 18;
 const twilight = isDay && (hr24 < 7 || hr24 >= 17);
 const stampTime = `${String(hr24).padStart(2, "0")}:${String(min).padStart(2, "0")}:${String(Math.floor(clockSeconds)).padStart(2, "0")} ${timeZoneLabel}`;
+const stampTime = `${String(hr24).padStart(2, "0")}:${String(min).padStart(2, "0")}:${String(Math.floor(clockSeconds)).padStart(2, "0")}`;
 
 // ================= PIXEL FONT (5x7) =================
 const FONT = Object.fromEntries(
@@ -773,6 +775,9 @@ const room = (mode) => {
   s += R(220, 124, 32, 22, P.chair) + R(222, 126, 28, 2, P.chairHi) + R(235, 128, 2, 16, P.chairHi);
   s += R(216, 146, 40, 6, P.chair) + R(216, 146, 40, 1, P.chairHi) + R(234, 152, 4, 6, P.lampDark);
   s += R(222, 157, 32, 2, P.lampDark) + R(222, 159, 4, 2, P.lampDark) + R(250, 159, 4, 2, P.lampDark);
+  s += R(198, 124, 32, 22, P.chair) + R(200, 126, 28, 2, P.chairHi) + R(213, 128, 2, 16, P.chairHi);
+  s += R(194, 146, 40, 6, P.chair) + R(194, 146, 40, 1, P.chairHi) + R(212, 152, 4, 6, P.lampDark);
+  s += R(200, 157, 32, 2, P.lampDark) + R(200, 159, 4, 2, P.lampDark) + R(228, 159, 4, 2, P.lampDark);
 
   // seated developer, leaning toward the monitor and typing
   const person =
@@ -808,6 +813,8 @@ const room = (mode) => {
 
   // updated stamp
   const stamp = `UPDATED ${localDate} ${stampTime}`;
+  // local clock time only
+  const stamp = stampTime;
   s += drawText(stamp, W - 24 - textWidth(stamp, 2), H - 22, 2, c.label);
 
   return svg(
@@ -818,6 +825,7 @@ const room = (mode) => {
     secHand +
     `<rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="14" fill="none" stroke="${c.border}" stroke-width="2"/>`,
     `${NAME}'s pixel room: a developer working at a computer, live ${CITY} weather, latest commits and local time`
+    `${NAME}'s pixel room: live ${CITY} weather, latest commits and local time`
   );
 };
 
