@@ -274,7 +274,9 @@ const drawText = (s, x, y, px, color) => {
 
 // ================= SMALL HELPERS =================
 const esc = (s = "") =>
-  String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  String(s)
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/g, "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const clip = (s, n) => (s.length > n ? s.slice(0, n - 3) + "..." : s);
 const hash = (s) => {
   let h = 2166136261;
@@ -689,7 +691,8 @@ const room = (mode) => {
     s += g("zz", `animation-delay:${d}s`, drawText("Z", x, y, px, c.label));
 
   // updated stamp
-  const stamp = `UPDATED ${now.toISOString().slice(0, 10)} ${stampTime}`;
+  const istDate = new Date(now.getTime() + 330 * 60000).toISOString().slice(0, 10);
+  const stamp = `UPDATED ${istDate} ${stampTime}`;
   s += drawText(stamp, W - 24 - textWidth(stamp, 2), H - 22, 2, c.label);
 
   return svg(
