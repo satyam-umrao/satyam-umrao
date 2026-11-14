@@ -137,26 +137,42 @@ if (!langs.length) langs = ["TypeScript", "JavaScript", "HTML", "CSS", "Java"];
 
 // ================= 4. WEATHER =================
 let weather = null;
-try {
-  const r = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weather_code`
-  );
-  const w = await r.json();
-  weather = { temp: Math.round(w.current.temperature_2m), code: w.current.weather_code };
-} catch (e) {
-  console.warn("Could not load weather:", e.message);
+for (let attempt = 0; attempt < 3 && !weather; attempt++) {
+  try {
+    const r = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day&timezone=Asia%2FKolkata`
+    );
+    const w = (await r.json()).current;
+    weather = {
+      temp: Math.round(w.temperature_2m),
+      feels: Math.round(w.apparent_temperature),
+      humidity: Math.round(w.relative_humidity_2m),
+      wind: Math.round(w.wind_speed_10m),
+      code: w.weather_code,
+      isDay: w.is_day === 1,
+    };
+  } catch (e) {
+    console.warn(`Weather attempt ${attempt + 1} failed:`, e.message);
+    await new Promise((res) => setTimeout(res, 2000));
+  }
 }
 const wc = weather?.code ?? 0;
-const cloudy = wc >= 1;
-const rainy = (wc >= 51 && wc <= 67) || (wc >= 80 && wc <= 82) || wc >= 95;
-const cond = (c) =>
-  c === 0 ? "CLEAR" : c <= 3 ? "CLOUDY" : c <= 48 ? "FOG" : c <= 57 ? "DRIZZLE"
-  : c <= 67 ? "RAIN" : c <= 77 ? "SNOW" : c <= 82 ? "RAIN" : "STORM";
+const kind =
+  wc === 0 ? "clear" : wc <= 2 ? "partly" : wc === 3 ? "cloudy" : wc <= 48 ? "fog"
+  : wc <= 57 ? "drizzle" : wc <= 67 ? "rain" : wc <= 77 ? "snow" : wc <= 82 ? "rain"
+  : wc <= 86 ? "snow" : "storm";
+const KIND_LABEL = {
+  clear: "CLEAR", partly: "CLOUDS", cloudy: "OVERCAST", fog: "FOG",
+  drizzle: "DRIZZLE", rain: "RAIN", snow: "SNOW", storm: "STORM",
+};
+const overcast = ["cloudy", "fog", "drizzle", "rain", "snow", "storm"].includes(kind);
 
 // time in India (IST = UTC+5:30)
 const istMinutes = (now.getUTCHours() * 60 + now.getUTCMinutes() + 330) % 1440;
 const hr24 = Math.floor(istMinutes / 60), min = istMinutes % 60;
-const isDay = hr24 >= 6 && hr24 < 18;
+const isDay = weather ? weather.isDay : hr24 >= 6 && hr24 < 18;
+const twilight = isDay && (hr24 < 7 || hr24 >= 17);
+const stampTime = `${String(hr24).padStart(2, "0")}:${String(min).padStart(2, "0")} IST`;
 
 // ================= 5. PROJECT REPOS (public only) =================
 const repos = [];
@@ -324,147 +340,305 @@ const ROOM = {
 };
 
 // ================= THE PIXEL ROOM =================
+// ================= WEATHER ICON (for the bar) =================
+const weatherIcon = (ox, oy, c) => {
+  const k = 4;
+  const cell = (x, y, w, h, fill) =>
+    `<rect x="${ox + x * k}" y="${oy + y * k}" width="${w * k}" height="${h * k}" fill="${fill}"/>`;
+  const cl = "#9fb0c3";
+  const cloud = (dy = 0) => cell(2, 2 + dy, 5, 1, cl) + cell(1, 3 + dy, 7, 1, cl) + cell(0, 4 + dy, 9, 2, cl);
+  const disc = (cx, cy, r, fill) => {
+    let o = "";
+    for (let y = 0; y < 10; y++)
+      for (let x = 0; x < 10; x++)
+        if (Math.hypot(x - cx, y - cy) <= r) o += cell(x, y, 1, 1, fill);
+    return o;
+  };
+  const rays = [[4,0],[5,0],[4,9],[5,9],[0,4],[0,5],[9,4],[9,5],[1,1],[8,1],[1,8],[8,8]]
+    .map(([x, y]) => cell(x, y, 1, 1, "#ffe98a")).join("");
+  const drop = (x, d, fill) => `<g class="dr" style="animation-delay:-${d}s">${cell(x, 7, 1, 2, fill)}</g>`;
+  const moon = (cx, cy, r) => disc(cx, cy, r, "#f4efd0") + disc(cx + 1.8, cy - 1, r - 0.4, c.panel);
+
+  let body = "";
+  if (kind === "clear")
+    body = isDay ? `<g class="o pulse">${rays}</g>${disc(4.5, 4.5, 2.6, "#ffd84d")}` : moon(4.5, 4.5, 3.4);
+  else if (kind === "partly")
+    body = (isDay ? disc(3.5, 3.5, 2.4, "#ffd84d") : moon(3.5, 3.5, 2.8)) + `<g class="bob">${cloud(1)}</g>`;
+  else if (kind === "cloudy") body = `<g class="bob">${cloud(1)}</g>`;
+  else if (kind === "fog")
+    body = `<g class="bob">${cell(1, 2, 8, 1, cl)}${cell(0, 4, 9, 1, cl)}${cell(1, 6, 8, 1, cl)}</g>`;
+  else if (kind === "drizzle" || kind === "rain")
+    body = cloud(0) + drop(2, 0, "#7aa7e6") + drop(4, 0.4, "#7aa7e6") + drop(6, 0.8, "#7aa7e6");
+  else if (kind === "snow")
+    body = cloud(0) + drop(2, 0, "#9ec1f0") + drop(4, 0.6, "#9ec1f0") + drop(6, 1.1, "#9ec1f0");
+  else
+    body = cloud(0) +
+      `<g class="bl" style="animation-duration:1.6s">${cell(5, 6, 2, 1, "#ffd84d")}${cell(4, 7, 2, 1, "#ffd84d")}${cell(5, 8, 1, 2, "#ffd84d")}</g>`;
+  return `<g shape-rendering="crispEdges">${body}</g>`;
+};
+
+// ================= THE PIXEL ROOM (animated) =================
 const room = (mode) => {
   const c = themes[mode], P = ROOM[mode];
-  const W = 1080, H = 540, u = 6;
+  const W = 1080, H = 600, u = 6;
+  const R = (col, row, w, h, fill, op) =>
+    `<rect x="${col * u}" y="${row * u}" width="${w * u}" height="${h * u}" fill="${fill}"${op ? ` fill-opacity="${op}"` : ""}/>`;
+  const g = (cls, style, inner) => `<g class="${cls}"${style ? ` style="${style}"` : ""}>${inner}</g>`;
+  const lh = 18, n = commitLines.length;
+  const dayHr = hr24 + min / 60;
   let s = "";
-  let defs = `<clipPath id="rc"><rect width="${W}" height="${H}" rx="14"/></clipPath>`;
-  const B = (col, row, w, h, fill, op) => {
-    s += `<rect x="${col * u}" y="${row * u}" width="${w * u}" height="${h * u}" fill="${fill}"${op ? ` fill-opacity="${op}"` : ""}/>`;
-  };
 
-  // wall + floor
-  B(0, 0, 180, 74, P.wallA);
-  for (let x = 0; x < 180; x += 8) B(x, 0, 4, 74, P.wallB);
-  B(0, 74, 180, 16, P.floorA);
-  B(0, 72, 180, 2, P.base);
+  // ---- animations (CSS inside the SVG)
+  const css = `
+.o{transform-box:fill-box;transform-origin:center}
+.tw{animation:tw 3s ease-in-out infinite}
+.cl{animation:drift linear infinite}
+.rd{animation:fall linear infinite}
+.sn{animation:snow linear infinite}
+.fog{animation:fogmove 9s ease-in-out infinite}
+.bolt{opacity:0;animation:bolt 7s infinite}
+.fly{animation:fly linear infinite}
+.fa{animation:fa .6s steps(1) infinite}
+.fb{animation:fb .6s steps(1) infinite}
+.pulse{animation:pulse 3s ease-in-out infinite}
+.plant{transform-origin:50% 100%;animation:sway 5s ease-in-out infinite}
+.swing{transform-box:view-box;transform-origin:540px 0;animation:swing 6s ease-in-out infinite}
+.cat{transform-origin:50% 100%;animation:breathe 3.6s ease-in-out infinite}
+.tail{transform-origin:0 50%;animation:wag 3s ease-in-out infinite}
+.zz{opacity:0;animation:zz 4s ease-out infinite}
+.st{opacity:0;animation:steam 2.4s ease-out infinite}
+.glow{animation:glow 4s ease-in-out infinite}
+.bl{animation:blink 1.2s steps(1) infinite}
+.sec{transform-box:view-box;transform-origin:951px 75px;animation:sweep 60s steps(60) infinite}
+.log{animation:scroll linear infinite}
+.bob{animation:bob 2.5s ease-in-out infinite}
+.dr{animation:dr 1.2s linear infinite}
+@keyframes tw{0%,100%{opacity:.15}50%{opacity:1}}
+@keyframes drift{from{transform:translateX(-64px)}to{transform:translateX(214px)}}
+@keyframes fall{from{transform:translateY(-14px)}to{transform:translateY(184px)}}
+@keyframes snow{0%{transform:translate(0,-10px)}50%{transform:translate(10px,90px)}100%{transform:translate(0,184px)}}
+@keyframes fogmove{0%,100%{transform:translateX(-18px)}50%{transform:translateX(18px)}}
+@keyframes bolt{0%,86%,100%{opacity:0}88%{opacity:.8}90%{opacity:.1}92%{opacity:.7}95%{opacity:0}}
+@keyframes fly{from{transform:translate(-30px,6px)}to{transform:translate(250px,-26px)}}
+@keyframes fa{0%{opacity:1}50%{opacity:0}}
+@keyframes fb{0%{opacity:0}50%{opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.12);opacity:1}}
+@keyframes sway{0%,100%{transform:rotate(-2.2deg)}50%{transform:rotate(2.2deg)}}
+@keyframes swing{0%,100%{transform:rotate(-1.4deg)}50%{transform:rotate(1.4deg)}}
+@keyframes breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.08)}}
+@keyframes wag{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(12deg)}}
+@keyframes zz{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(24px,-56px)}}
+@keyframes steam{0%{opacity:0;transform:translateY(0)}30%{opacity:.8}100%{opacity:0;transform:translateY(-24px)}}
+@keyframes glow{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes blink{0%{opacity:1}50%{opacity:0}}
+@keyframes sweep{to{transform:rotate(360deg)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes dr{0%{transform:translateY(-2px);opacity:0}30%{opacity:1}100%{transform:translateY(6px);opacity:0}}
+@keyframes scroll{from{transform:translateY(0)}to{transform:translateY(-${n * lh}px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}`;
+
+  let defs =
+    `<clipPath id="rc"><path d="M0,14A14,14 0 0 1 14,0H1066A14,14 0 0 1 1080,14V540H0Z"/></clipPath>` +
+    `<clipPath id="win"><rect x="60" y="48" width="204" height="168"/></clipPath>` +
+    `<clipPath id="scr"><rect x="412" y="168" width="328" height="110"/></clipPath>`;
+
+  // ---- wall + floor
+  s += R(0, 0, 180, 74, P.wallA);
+  for (let x = 0; x < 180; x += 8) s += R(x, 0, 4, 74, P.wallB);
+  s += R(0, 74, 180, 16, P.floorA) + R(0, 72, 180, 2, P.base);
   for (let r = 0; r < 16; r += 4) {
-    B(0, 74 + r, 180, 1, P.floorB);
-    for (let x = ((r / 4) % 2) * 15; x < 180; x += 30) B(x, 74 + r, 1, 4, P.floorB);
+    s += R(0, 74 + r, 180, 1, P.floorB);
+    for (let x = ((r / 4) % 2) * 15; x < 180; x += 30) s += R(x, 74 + r, 1, 4, P.floorB);
   }
 
-  // window with live sky
-  const sky = isDay ? "#7cc4ff" : "#0d1844";
-  B(6, 38, 42, 2, P.sill);
-  B(8, 6, 38, 32, P.frame);
-  B(10, 8, 34, 28, sky);
-  if (!isDay) {
+  // ---- window: live sky
+  const sk = overcast
+    ? isDay ? (twilight ? ["#5d5a78", "#b78a74"] : ["#8fa3b8", "#b7c4d1"]) : ["#121827", "#1b2336"]
+    : isDay ? (twilight ? ["#6c5b9e", "#f2956b"] : ["#6bb8f5", "#a8dcff"]) : ["#0a1233", "#16245a"];
+  let sky = R(10, 8, 34, 28, sk[0]) + R(10, 26, 34, 10, sk[1]);
+
+  if (!isDay || twilight) {
+    const nStars = !isDay ? (overcast ? 4 : 18) : overcast ? 0 : 6;
     const rs = rng(11);
-    for (let i = 0; i < 16; i++) B(10 + Math.floor(rs() * 33), 8 + Math.floor(rs() * 27), 1, 1, "#ffffff", 0.9);
-    B(37, 10, 2, 1, "#f4efd0"); B(36, 11, 4, 2, "#f4efd0"); B(37, 13, 2, 1, "#f4efd0");
-    B(38, 11, 2, 2, sky);
-  } else {
-    B(13, 10, 4, 1, "#ffd84d"); B(12, 11, 6, 4, "#ffd84d"); B(13, 15, 4, 1, "#ffd84d");
-  }
-  if (cloudy) {
-    const cc = isDay ? "#ffffff" : "#3a4770";
-    for (const [cx, cy] of [[13, 18], [30, 12]]) { B(cx + 1, cy, 5, 1, cc, 0.9); B(cx, cy + 1, 8, 2, cc, 0.9); }
-  }
-  if (rainy) {
-    const rr = rng(5);
-    for (let i = 0; i < 14; i++) B(10 + Math.floor(rr() * 33), 14 + Math.floor(rr() * 20), 1, 2, "#7aa7e6", 0.9);
-  }
-  B(26, 8, 2, 28, P.frame);
-  B(10, 21, 34, 2, P.frame);
-  if (weather) {
-    const tc = isDay ? "#0b2a55" : "#ffffff";
-    s += drawText(`${weather.temp}C`, 66, 150, 3, tc);
-    s += drawText(cond(weather.code), 66, 180, 2, tc);
+    for (let i = 0; i < nStars; i++)
+      sky += `<rect class="tw" x="${62 + Math.floor(rs() * 198)}" y="${52 + Math.floor(rs() * 84)}" width="4" height="4" fill="#ffffff" style="animation-delay:-${(rs() * 3).toFixed(2)}s;animation-duration:${(2 + rs() * 3).toFixed(2)}s"/>`;
   }
 
-  // name plate
-  B(80, 0, 1, 5, P.plateEdge); B(98, 0, 1, 5, P.plateEdge);
-  B(62, 5, 56, 11, P.plateEdge);
-  B(63, 6, 54, 9, P.plate);
-  s += drawText(NAME, 62 * u + (56 * u - textWidth(NAME, 4)) / 2, 6 * u + (9 * u - 28) / 2, 4, P.plateText);
+  if (!overcast && isDay) {
+    const f = Math.min(1, Math.max(0, (dayHr - 6) / 12));
+    const cx = Math.round(16 + f * 22), cy = Math.round(28 - Math.sin(Math.PI * f) * 14);
+    const col = twilight ? "#ffb347" : "#ffd84d";
+    let disc = "", rays = "";
+    for (let dy = -3; dy <= 3; dy++)
+      for (let dx = -3; dx <= 3; dx++) if (Math.hypot(dx, dy) <= 3.3) disc += R(cx + dx, cy + dy, 1, 1, col);
+    for (const [dx, dy] of [[0,-5],[0,5],[-5,0],[5,0],[-4,-4],[4,-4],[-4,4],[4,4]])
+      rays += R(cx + dx, cy + dy, 1, 1, "#ffe98a");
+    sky += g("o pulse", "", rays) + disc;
+  }
+  if (!overcast && !isDay) {
+    const f = Math.min(1, (dayHr >= 18 ? dayHr - 18 : dayHr + 6) / 12);
+    const cx = Math.round(16 + f * 22), cy = Math.round(28 - Math.sin(Math.PI * f) * 14);
+    const cut = cy >= 24 ? sk[1] : sk[0];
+    for (let dy = -3; dy <= 3; dy++)
+      for (let dx = -3; dx <= 3; dx++) if (Math.hypot(dx, dy) <= 3.3) sky += R(cx + dx, cy + dy, 1, 1, "#f4efd0");
+    for (let dy = -3; dy <= 3; dy++)
+      for (let dx = -3; dx <= 3; dx++) if (Math.hypot(dx - 2, dy + 1) <= 2.7) sky += R(cx + dx, cy + dy, 1, 1, cut);
+  }
 
-  // clock with the real time in India
+  if (kind === "fog")
+    for (let i = 0; i < 3; i++)
+      sky += g("fog", `animation-delay:-${i * 2.5}s`, R(6, 14 + i * 7, 42, 2, "#ffffff", 0.3));
+
+  const nCloud = { clear: 1, partly: 2, cloudy: 4, fog: 0, drizzle: 4, rain: 4, snow: 4, storm: 4 }[kind];
+  const cc = overcast
+    ? isDay ? (["drizzle", "rain", "storm"].includes(kind) ? "#6f7b8b" : "#98a4b3") : "#2a3144"
+    : isDay ? "#ffffff" : "#3a4770";
+  const cr = rng(21);
+  for (let i = 0; i < nCloud; i++) {
+    const row = 9 + Math.floor(cr() * 14);
+    const big = overcast || i % 2 === 0;
+    const body = big
+      ? R(11, row, 7, 1, cc, 0.95) + R(10, row + 1, 10, 2, cc, 0.95)
+      : R(11, row, 5, 1, cc, 0.95) + R(10, row + 1, 8, 2, cc, 0.95);
+    const d = 40 + cr() * 40;
+    sky += g("cl", `animation-duration:${d.toFixed(1)}s;animation-delay:-${(cr() * d).toFixed(1)}s`, body);
+  }
+
+  const nDrops = { drizzle: 10, rain: 24, storm: 30 }[kind] ?? 0;
+  const dr = rng(33);
+  for (let i = 0; i < nDrops; i++) {
+    const dur = 0.55 + dr() * 0.45;
+    sky += `<rect class="rd" x="${60 + Math.floor(dr() * 200)}" y="48" width="3" height="10" fill="#8fb4ee" fill-opacity=".85" style="animation-duration:${dur.toFixed(2)}s;animation-delay:-${(dr() * dur).toFixed(2)}s"/>`;
+  }
+  if (kind === "snow") {
+    const sr = rng(44);
+    for (let i = 0; i < 18; i++) {
+      const dur = 4 + sr() * 4;
+      sky += `<rect class="sn" x="${60 + Math.floor(sr() * 196)}" y="48" width="4" height="4" fill="#ffffff" style="animation-duration:${dur.toFixed(1)}s;animation-delay:-${(sr() * dur).toFixed(1)}s"/>`;
+    }
+  }
+  if (kind === "storm") sky += `<rect class="bolt" x="60" y="48" width="204" height="168" fill="#ffffff"/>`;
+
+  if (isDay && !twilight && !overcast) {
+    const bc = "#2b3a55";
+    sky += g("fly", "animation-duration:24s;animation-delay:-7s",
+      g("fa", "", R(10, 16, 1, 1, bc) + R(11, 17, 1, 1, bc) + R(12, 16, 1, 1, bc)) +
+      g("fb", "", R(10, 17, 1, 1, bc) + R(11, 16, 1, 1, bc) + R(12, 17, 1, 1, bc)));
+  }
+
+  s += R(6, 38, 42, 2, P.sill) + R(8, 6, 38, 32, P.frame);
+  s += `<g clip-path="url(#win)">${sky}</g>`;
+  s += R(26, 8, 2, 28, P.frame) + R(10, 21, 34, 2, P.frame);
+
+  // ---- hanging name plate (swings)
+  const plate =
+    R(80, 0, 1, 5, P.plateEdge) + R(98, 0, 1, 5, P.plateEdge) +
+    R(62, 5, 56, 11, P.plateEdge) + R(63, 6, 54, 9, P.plate) +
+    drawText(NAME, 62 * u + (56 * u - textWidth(NAME, 4)) / 2, 6 * u + (9 * u - 28) / 2, 4, P.plateText);
+  s += `<g class="swing">${plate}</g>`;
+
+  // ---- clock (time of the last update + sweeping second hand)
   const ccx = 158, ccy = 12;
   for (let y = -6; y <= 6; y++)
     for (let x = -6; x <= 6; x++) {
       const d = Math.hypot(x, y);
-      if (d <= 6.2) B(ccx + x, ccy + y, 1, 1, d > 5 ? P.clockRing : P.clockFace);
+      if (d <= 6.2) s += R(ccx + x, ccy + y, 1, 1, d > 5 ? P.clockRing : P.clockFace);
     }
   const hand = (ang, len) => {
-    for (let t = 0; t <= len; t += 0.5)
-      B(Math.round(ccx + Math.sin(ang) * t), Math.round(ccy - Math.cos(ang) * t), 1, 1, P.hand);
+    const seen = new Set();
+    let o = "";
+    for (let t = 0; t <= len; t += 0.5) {
+      const x = Math.round(ccx + Math.sin(ang) * t), y = Math.round(ccy - Math.cos(ang) * t);
+      const key = `${x},${y}`;
+      if (!seen.has(key)) { seen.add(key); o += R(x, y, 1, 1, P.hand); }
+    }
+    return o;
   };
-  hand((min / 60) * 2 * Math.PI, 4.5);
-  hand((((hr24 % 12) + min / 60) / 12) * 2 * Math.PI, 3);
+  s += hand((min / 60) * 2 * Math.PI, 4.5);
+  s += hand((((hr24 % 12) + min / 60) / 12) * 2 * Math.PI, 3);
+  const secHand = `<line class="sec" x1="951" y1="75" x2="951" y2="42" stroke="#d1453b" stroke-width="2"/><rect x="948" y="72" width="6" height="6" fill="#d1453b"/>`;
 
-  // shelves: one book per language
-  B(126, 40, 52, 2, P.shelf); B(126, 42, 52, 1, P.shelfDark);
+  // ---- shelves: one book per language, mug with steam, picture
+  s += R(126, 40, 52, 2, P.shelf) + R(126, 42, 52, 1, P.shelfDark);
   let bx = 129;
   for (const l of langs) {
     const h = hash(l);
     const w = 3 + (h % 2), bh = 7 + (h % 4);
     if (bx + w > 175) break;
-    B(bx, 40 - bh, w, bh, langColor(l));
-    B(bx, 40 - bh + 2, w, 1, "#000000", 0.25);
-    B(bx, 40 - 2, w, 1, "#000000", 0.25);
+    s += R(bx, 40 - bh, w, bh, langColor(l)) + R(bx, 40 - bh + 2, w, 1, "#000000", 0.25) + R(bx, 38, w, 1, "#000000", 0.25);
     bx += w + 1;
   }
-  B(138, 54, 40, 2, P.shelf); B(138, 56, 40, 1, P.shelfDark);
-  B(142, 50, 4, 4, P.mug); B(146, 51, 1, 2, P.mug);
-  B(158, 49, 10, 5, P.frame); B(159, 50, 8, 3, P.leaf2, 0.5);
+  s += R(138, 54, 40, 2, P.shelf) + R(138, 56, 40, 1, P.shelfDark);
+  s += R(142, 50, 4, 4, P.mug) + R(146, 51, 1, 2, P.mug);
+  for (const [col, d] of [[142, 0], [144, -0.8], [145, -1.6]])
+    s += g("st", `animation-delay:${d}s`, R(col, 48, 1, 1, "#ffffff", 0.8));
+  s += R(158, 49, 10, 5, P.frame) + R(159, 50, 8, 3, P.leaf2, 0.5);
 
-  // plant
-  B(37, 50, 2, 17, P.leaf1);
-  for (const [cx, cy, w, h] of [[32, 56, 5, 2], [40, 53, 6, 2], [31, 60, 6, 2], [41, 59, 6, 2], [35, 48, 6, 3], [36, 63, 4, 2]]) {
-    B(cx, cy, w, h, P.leaf2);
-    B(cx, cy + h - 1, w, 1, P.leaf1);
+  // ---- plant (sways)
+  let plant = R(37, 50, 2, 17, P.leaf1);
+  for (const [cx, cy, w, h] of [[32, 56, 5, 2], [40, 53, 6, 2], [31, 60, 6, 2], [41, 59, 6, 2], [35, 48, 6, 3], [36, 63, 4, 2]])
+    plant += R(cx, cy, w, h, P.leaf2) + R(cx, cy + h - 1, w, 1, P.leaf1);
+  s += g("plant o", "", plant) + R(33, 66, 12, 2, P.pot) + R(34, 68, 10, 6, P.pot) + R(34, 72, 10, 2, P.potDark);
+
+  // ---- desk + glowing lamp
+  s += R(50, 57, 92, 3, P.desk) + R(50, 60, 92, 1, P.deskDark);
+  s += R(57, 61, 78, 13, "#000000", 0.18) + R(54, 61, 3, 13, P.deskDark) + R(136, 61, 3, 13, P.deskDark);
+  s += g("glow", "", R(49, 42, 18, 14, P.lamp, 0.22) + R(52, 44, 12, 10, P.lamp, 0.22));
+  s += R(54, 37, 7, 1, P.lamp) + R(52, 38, 11, 3, P.lamp) + R(51, 41, 13, 1, P.lamp);
+  s += R(57, 42, 2, 14, P.lampDark) + R(54, 56, 8, 1, P.lampDark);
+
+  // ---- monitor with scrolling commits
+  s += R(66, 22, 60, 28, P.bezel) + R(68, 24, 56, 23, P.screen);
+  s += R(94, 50, 4, 5, P.bezel) + R(86, 55, 20, 2, P.bezel) + R(106, 55, 16, 2, P.bezel);
+  s += drawText("~/COMMITS", 418, 149, 2, "#2f8f4a");
+  s += drawText("LIVE", 670, 149, 2, "#ff7b72") + `<rect class="bl" x="724" y="150" width="8" height="8" fill="#ff5f56"/>`;
+  s += `<rect x="412" y="166" width="328" height="1" fill="#1d3b27"/>`;
+  const copies = n >= 2 ? Math.ceil(140 / (n * lh)) + 1 : 1;
+  let rows = "";
+  for (let k = 0; k < copies; k++)
+    commitLines.forEach((l, i) => {
+      rows += `<text x="420" y="${186 + (k * n + i) * lh}" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="12" fill="${P.code}">${esc(clip("> " + l, 42))}</text>`;
+    });
+  s += `<g clip-path="url(#scr)"><g${n >= 2 ? ` class="log" style="animation-duration:${Math.max(8, n * 2.4)}s"` : ""}>${rows}</g></g>`;
+
+  // ---- chair
+  s += R(102, 61, 16, 10, P.chair) + R(103, 62, 14, 1, P.chairHi) + R(109, 71, 2, 2, P.chair) + R(103, 73, 14, 1, P.chair);
+
+  // ---- sleeping cat (breathes, tail wags, Zs float up)
+  s += R(140, 77, 28, 1, "#000000", 0.2);
+  const cat =
+    R(146, 70, 16, 7, P.cat) + R(150, 70, 2, 7, P.catDark) + R(155, 70, 2, 7, P.catDark) +
+    R(141, 72, 6, 5, P.cat) + R(141, 70, 2, 2, P.cat) + R(145, 70, 2, 2, P.cat) + R(142, 74, 2, 1, P.catDark);
+  s += g("cat o", "", cat) + g("tail o", "", R(162, 73, 5, 3, P.cat));
+  for (const [x, y, px, d] of [[852, 404, 3, 0], [872, 392, 2, -1.3], [892, 380, 2, -2.6]])
+    s += g("zz", `animation-delay:${d}s`, drawText("Z", x, y, px, c.label));
+
+  // ---- weather bar under the room
+  const y0 = 548, bh = 44;
+  let hud = `<rect x="12" y="${y0}" width="1056" height="${bh}" rx="8" fill="${c.panel}" stroke="${c.border}" stroke-width="2"/>`;
+  const col = (x, label, value) => drawText(label, x, y0 + 5, 2, c.label) + drawText(value, x, y0 + 21, 3, c.value);
+  if (weather) {
+    const t = `${weather.temp}C`;
+    hud += weatherIcon(26, y0 + 2, c);
+    hud += drawText(t, 80, y0 + 5, 5, c.value);
+    hud += drawText(KIND_LABEL[kind], 80 + textWidth(t, 5) + 16, y0 + 12, 3, c.green);
+    hud += `<rect x="345" y="${y0 + 8}" width="2" height="${bh - 16}" fill="${c.border}"/>`;
+    hud += col(365, "HUMIDITY", `${weather.humidity}%`);
+    hud += col(530, "WIND", `${weather.wind} KMH`);
+    hud += col(690, "FEELS LIKE", `${weather.feels}C`);
+  } else {
+    hud += drawText("WEATHER OFFLINE", 30, y0 + 12, 3, c.label);
   }
-  B(33, 66, 12, 2, P.pot); B(34, 68, 10, 6, P.pot); B(34, 72, 10, 2, P.potDark);
-
-  // desk
-  B(50, 57, 92, 3, P.desk); B(50, 60, 92, 1, P.deskDark);
-  B(57, 61, 78, 13, "#000000", 0.18);
-  B(54, 61, 3, 13, P.deskDark); B(136, 61, 3, 13, P.deskDark);
-
-  // lamp
-  B(49, 42, 18, 14, P.lamp, 0.06);
-  B(54, 37, 7, 1, P.lamp); B(52, 38, 11, 3, P.lamp); B(51, 41, 13, 1, P.lamp);
-  B(57, 42, 2, 14, P.lampDark); B(54, 56, 8, 1, P.lampDark);
-
-  // monitor with scrolling commits
-  B(66, 22, 60, 28, P.bezel);
-  B(68, 24, 56, 23, P.screen);
-  B(94, 50, 4, 5, P.bezel); B(86, 55, 20, 2, P.bezel);
-  B(106, 55, 16, 2, P.bezel);
-  defs += `<clipPath id="scr"><rect x="416" y="150" width="320" height="126"/></clipPath>`;
-  const lh = 18, n = commitLines.length;
-  const row = (l, i) =>
-    `<text x="424" y="${166 + i * lh}" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="12" fill="${P.code}">${esc(clip(l, 44))}</text>`;
-  let rows = commitLines.map((l, i) => row(l, i)).join("");
-  let anim = "";
-  if (n >= 7) {
-    rows += commitLines.map((l, i) => row(l, i + n)).join("");
-    anim = `<animateTransform attributeName="transform" type="translate" from="0 0" to="0 -${n * lh}" dur="${n * 2.5}s" repeatCount="indefinite"/>`;
-  }
-  s += `<g clip-path="url(#scr)"><g>${rows}${anim}</g></g>`;
-
-  // chair
-  B(102, 61, 16, 10, P.chair); B(103, 62, 14, 1, P.chairHi);
-  B(109, 71, 2, 2, P.chair); B(103, 73, 14, 1, P.chair);
-
-  // sleeping cat + Z
-  B(140, 77, 28, 1, "#000000", 0.2);
-  B(146, 70, 16, 7, P.cat);
-  B(150, 70, 2, 7, P.catDark); B(155, 70, 2, 7, P.catDark);
-  B(141, 72, 6, 5, P.cat); B(141, 70, 2, 2, P.cat); B(145, 70, 2, 2, P.cat);
-  B(142, 74, 2, 1, P.catDark);
-  B(162, 73, 5, 3, P.cat);
-  s += drawText("Z", 950, 372, 3, c.label);
-  s += drawText("Z", 984, 336, 2, c.label);
-
-  // updated stamp
-  const stamp = `UPDATED ${now.toISOString().slice(0, 10)}`;
-  s += drawText(stamp, W - 24 - textWidth(stamp, 2), H - 22, 2, c.label);
+  hud += col(850, "UPDATED", stampTime);
 
   return svg(
     W, H,
-    `<defs>${defs}</defs><g clip-path="url(#rc)" shape-rendering="crispEdges">${s}</g><rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="14" fill="none" stroke="${c.border}" stroke-width="2"/>`,
-    `${NAME}'s pixel room: ${CITY} weather, latest commits and languages`
+    `<defs><style>${css}</style>${defs}</defs>` +
+    `<rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="14" fill="${c.bg}"/>` +
+    `<g clip-path="url(#rc)" shape-rendering="crispEdges">${s}</g>` +
+    secHand + hud +
+    `<rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="14" fill="none" stroke="${c.border}" stroke-width="2"/>`,
+    `${NAME}'s pixel room: live ${CITY} weather, latest commits and languages`
   );
 };
 
