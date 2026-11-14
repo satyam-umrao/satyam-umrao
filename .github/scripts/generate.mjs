@@ -1,31 +1,69 @@
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, renameSync } from "node:fs";
+import { dirname, join, relative, resolve, sep } from "node:path";
 
 // ================= CONFIG =================
-const USER = "satyam-umrao";
-const NAME = "SATYAM UMRAO";
-const CITY = "KANPUR";
-const LAT = 26.4499, LON = 80.3319;
-const FEATURED = ["ToolNest-AI", "caffora", "Java", "MyDocuStack"];
+const USER = process.env.GITHUB_USER || "satyam-umrao";
+const NAME = process.env.PROFILE_NAME || "SATYAM UMRAO";
+const CITY = process.env.CITY || "KANPUR";
+const LAT = Number(process.env.LATITUDE ?? 26.4499);
+const LON = Number(process.env.LONGITUDE ?? 80.3319);
+const FEATURED = (process.env.FEATURED_REPOS || "ToolNest-AI,caffora,Java,MyDocuStack")
+  .split(",").map((x) => x.trim()).filter(Boolean);
+const scaleInput = Number(process.env.OUTPUT_SCALE || 2);
+const OUTPUT_SCALE = Number.isFinite(scaleInput) ? Math.min(4, Math.max(1, Math.floor(scaleInput))) : 2;
+const ASSET_DIR = process.env.ASSET_DIR || "assets";
+const README_FILE = process.env.README_FILE || "README.md";
+const DRY_RUN = process.argv.includes("--dry-run");
+const SHOW_HELP = process.argv.includes("--help") || process.argv.includes("-h");
 
-const STATS_TOKEN = process.env.STATS_TOKEN;
-const GH_TOKEN = process.env.GITHUB_TOKEN;
-if (!STATS_TOKEN) throw new Error("STATS_TOKEN secret is missing");
+const GH_TOKEN = process.env.GITHUB_TOKEN || process.env.STATS_TOKEN;
+const STATS_TOKEN = process.env.STATS_TOKEN || GH_TOKEN;
+
+if (SHOW_HELP) {
+  console.log(`GitHub profile SVG generator\n\nUsage: node generate.mjs [--dry-run]\n\nEnvironment:\n  GITHUB_USER       GitHub login (default: ${USER})\n  PROFILE_NAME      Name shown on the room sign\n  CITY, LATITUDE, LONGITUDE  Weather location\n  FEATURED_REPOS    Comma-separated repository names\n  OUTPUT_SCALE      SVG output density from 1 to 4 (default: 2)\n  ASSET_DIR         Asset output folder (default: assets)\n  README_FILE       README to update (default: README.md)\n  GITHUB_TOKEN      GitHub token; can also supply STATS_TOKEN\n  STATS_TOKEN       GitHub token with GraphQL access\n\n--dry-run fetches data and builds the SVGs without writing files.`);
+  process.exit(0);
+}
+if (!STATS_TOKEN) throw new Error("GitHub token missing. Set STATS_TOKEN or GITHUB_TOKEN.");
+if (!Number.isFinite(LAT) || !Number.isFinite(LON)) throw new Error("LATITUDE and LONGITUDE must be valid numbers.");
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const requestJson = async (url, options = {}) => {
+  let lastError;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const r = await fetch(url, { ...options, signal: AbortSignal.timeout(20_000) });
+      if (!r.ok) {
+        const detail = (await r.text()).slice(0, 500);
+        const error = new Error(`${url} -> ${r.status}${detail ? `: ${detail}` : ""}`);
+        if (r.status < 500 && r.status !== 429) throw error;
+        lastError = error;
+        const retryAfter = Number(r.headers.get("retry-after"));
+        await sleep(retryAfter > 0 ? Math.min(retryAfter * 1000, 10_000) : 500 * 2 ** attempt);
+        continue;
+      }
+      return await r.json();
+    } catch (e) {
+      lastError = e;
+      if (e.message?.includes(" -> ") && !/ -> (429|5\d\d)/.test(e.message)) throw e;
+      if (attempt < 3) await sleep(500 * 2 ** attempt);
+    }
+  }
+  throw lastError || new Error(`Request failed: ${url}`);
+};
 
 // ================= API HELPERS =================
 const rest = async (path) => {
-  const r = await fetch(`https://api.github.com${path}`, {
+  return requestJson(`https://api.github.com${path}`, {
     headers: {
       Accept: "application/vnd.github+json",
       "User-Agent": "readme-generator",
       ...(GH_TOKEN && { Authorization: `Bearer ${GH_TOKEN}` }),
     },
   });
-  if (!r.ok) throw new Error(`${path} -> ${r.status}`);
-  return r.json();
 };
 
 const gql = async (query, variables) => {
-  const r = await fetch("https://api.github.com/graphql", {
+  const j = await requestJson("https://api.github.com/graphql", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${STATS_TOKEN}`,
@@ -34,8 +72,8 @@ const gql = async (query, variables) => {
     },
     body: JSON.stringify({ query, variables }),
   });
-  const j = await r.json();
-  if (j.errors) throw new Error(JSON.stringify(j.errors));
+  if (j.errors?.length) throw new Error(j.errors.map((e) => e.message).join("; "));
+  if (!j.data) throw new Error("GitHub GraphQL returned no data.");
   return j.data;
 };
 
@@ -44,6 +82,7 @@ const { user } = await gql(
   `query($login:String!){ user(login:$login){ createdAt } }`,
   { login: USER }
 );
+if (!user?.createdAt) throw new Error(`GitHub user "${USER}" was not found or is inaccessible.`);
 const now = new Date();
 let commits = 0, prs = 0, priv = 0;
 const days = new Map();
@@ -72,7 +111,9 @@ for (let y = new Date(user.createdAt).getUTCFullYear(); y <= now.getUTCFullYear(
     for (const day of w.contributionDays)
       days.set(day.date, Math.max(days.get(day.date) ?? 0, day.contributionCount));
 }
-const commitsAll = commits + priv;
+// Restricted contribution counts include private activity, so present this as
+// overall activity rather than implying every restricted item was a commit.
+const activity = commits + priv;
 
 let stars = 0, cursor = null, more = true;
 while (more) {
@@ -101,23 +142,43 @@ for (const date of [...days.keys()].sort()) {
   if (active) best = Math.max(best, run);
   prev = date;
 }
+const dayKey = (d) => d.toISOString().slice(0, 10);
+const shiftDay = (date, amount) => {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + amount);
+  return dayKey(d);
+};
+const todayKey = dayKey(now);
+let streakDate = days.get(todayKey) > 0 ? todayKey : shiftDay(todayKey, -1);
+let current = 0;
+while (days.get(streakDate) > 0) {
+  current++;
+  streakDate = shiftDay(streakDate, -1);
+}
 
 // ================= 2. LATEST PUBLIC COMMITS (for the monitor) =================
 let commitLines = [];
 try {
-  const events = await rest(`/users/${USER}/events/public?per_page=100`);
+  const events = await rest(`/users/${encodeURIComponent(USER)}/events/public?per_page=100`);
   const seen = new Set();
+  const picks = [];
   for (const e of events) {
-    if (e.type !== "PushEvent" || commitLines.length >= 8) continue;
-    const sha = e.payload.head;
+    if (e.type !== "PushEvent" || picks.length >= 8) continue;
+    const sha = e.payload?.head;
     const repo = e.repo.name.split("/")[1];
     if (!sha || seen.has(sha) || repo === USER) continue;
     seen.add(sha);
-    try {
-      const c = await rest(`/repos/${e.repo.name}/commits/${sha}`);
-      commitLines.push(`${repo}: ${c.commit.message.split("\n")[0]}`);
-    } catch {}
+    picks.push({ repo, fullName: e.repo.name, sha });
   }
+  commitLines = (await Promise.all(picks.map(async ({ repo, fullName, sha }) => {
+    try {
+      const c = await rest(`/repos/${fullName}/commits/${sha}`);
+      return `${repo}: ${c.commit.message.split("\n")[0]}`;
+    } catch (e) {
+      console.warn(`Could not load commit ${sha.slice(0, 7)}:`, e.message);
+      return null;
+    }
+  }))).filter(Boolean);
 } catch (e) {
   console.warn("Could not load events:", e.message);
 }
@@ -126,7 +187,12 @@ if (!commitLines.length) commitLines = ["no public commits yet"];
 // ================= 3. LANGUAGES (for the bookshelf) =================
 let langs = [];
 try {
-  const all = await rest(`/users/${USER}/repos?per_page=100&type=owner`);
+  const all = [];
+  for (let page = 1; ; page++) {
+    const batch = await rest(`/users/${encodeURIComponent(USER)}/repos?per_page=100&type=owner&page=${page}`);
+    all.push(...batch);
+    if (batch.length < 100) break;
+  }
   const count = {};
   for (const r of all) if (!r.fork && r.language) count[r.language] = (count[r.language] ?? 0) + 1;
   langs = Object.entries(count).sort((a, b) => b[1] - a[1]).map(([l]) => l).slice(0, 9);
@@ -139,10 +205,11 @@ if (!langs.length) langs = ["TypeScript", "JavaScript", "HTML", "CSS", "Java"];
 let weather = null;
 for (let attempt = 0; attempt < 3 && !weather; attempt++) {
   try {
-    const r = await fetch(
+    const data = await requestJson(
       `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day&timezone=Asia%2FKolkata`
     );
-    const w = (await r.json()).current;
+    const w = data.current;
+    if (!w) throw new Error("Weather service returned no current conditions.");
     weather = {
       temp: Math.round(w.temperature_2m),
       feels: Math.round(w.apparent_temperature),
@@ -178,7 +245,7 @@ const stampTime = `${String(hr24).padStart(2, "0")}:${String(min).padStart(2, "0
 const repos = [];
 for (const name of FEATURED) {
   try {
-    const r = await rest(`/repos/${USER}/${name}`);
+    const r = await rest(`/repos/${encodeURIComponent(USER)}/${encodeURIComponent(name)}`);
     if (r.private) { console.warn(`Skipped ${name}: repo is private`); continue; }
     repos.push(r);
   } catch (e) {
@@ -306,7 +373,7 @@ const wrap = (text, width, maxLines) => {
   return lines;
 };
 const svg = (W, H, inner, label) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(label)}">${inner}</svg>`;
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W * OUTPUT_SCALE}" height="${H * OUTPUT_SCALE}" preserveAspectRatio="xMidYMid meet" shape-rendering="crispEdges" role="img" aria-label="${esc(label)}"><title>${esc(label)}</title>${inner}</svg>`;
 const frame = (W, H, c) =>
   `<rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="14" fill="${c.bg}" stroke="${c.border}" stroke-width="2"/>`;
 
@@ -569,6 +636,10 @@ const room = (mode) => {
   if (weather) {
     const lab = `${weather.temp}C ${KIND_LABEL[kind]}`;
     s += drawText(lab, Math.round(162 - textWidth(lab, 2) / 2), 254, 2, c.label);
+    const detail = `FEELS ${weather.feels}C  HUM ${weather.humidity}%`;
+    s += drawText(detail, Math.round(162 - textWidth(detail, 1.7) / 2), 275, 1.7, c.label);
+    const wind = `WIND ${weather.wind} KPH`;
+    s += drawText(wind, Math.round(162 - textWidth(wind, 1.7) / 2), 292, 1.7, c.label);
   }
 
   // curtains + rod
@@ -709,20 +780,26 @@ const room = (mode) => {
 // ================= STATS CARD / HEADING / PROJECT CARDS =================
 const statsCard = (c) => {
   const items = [
-    ["COMMITS", String(commitsAll)],
-    ["PULL REQS", String(prs)],
+    ["ACTIVITY", String(activity)],
+    ["PULL REQUESTS", String(prs)],
     ["STARS", String(stars)],
     ["BEST STREAK", `${best}D`],
+    ["CURRENT STREAK", `${current}D`],
   ];
-  const W = 1080, H = 108, PAD = 30;
+  const W = 1080, H = 118, PAD = 24;
   const colW = (W - PAD * 2) / items.length;
-  const NUM_PX = 5, LABEL_PX = 2.5, LABEL_Y = 66;
-  const NUM_Y = LABEL_Y - 8 - 7 * NUM_PX;
+  const LABEL_Y = 80;
   let s = frame(W, H, c);
   items.forEach(([label, value], i) => {
     const x = PAD + i * colW;
-    s += drawText(value, x, NUM_Y, NUM_PX, c.value);
-    s += drawText(label, x, LABEL_Y, LABEL_PX, c.label);
+    const valuePx = Math.min(5, (colW - 24) / Math.max(1, [...U(value)].length * 6 - 1));
+    const labelPx = Math.min(2.5, (colW - 20) / Math.max(1, [...U(label)].length * 6 - 1));
+    const valueWidth = textWidth(value, valuePx);
+    const labelWidth = textWidth(label, labelPx);
+    s += drawText(value, x + (colW - valueWidth) / 2, 28, valuePx, c.value);
+    s += drawText(label, x + (colW - labelWidth) / 2, LABEL_Y, labelPx, c.label);
+    if (i > 0) s += `<line x1="${x}" y1="28" x2="${x}" y2="92" stroke="${c.border}" stroke-width="2"/>`;
+    s += `<rect x="${x + (colW - 28) / 2}" y="101" width="28" height="3" fill="${c.green}"/>`;
   });
   return svg(W, H, s, items.map(([l, v]) => `${v} ${l.toLowerCase()}`).join(", "));
 };
@@ -744,13 +821,18 @@ const card = (r, c) => {
   const rand = rng(hash(r.name));
   let s = frame(W, H, c);
 
-  s += `<rect x="24" y="28" width="96" height="96" rx="10" fill="${lc}" fill-opacity="0.2"/>`;
-  for (let y = 0; y < 5; y++)
-    for (let x = 0; x < 3; x++)
-      if (rand() > 0.45) {
-        const py = 36 + y * 16;
-        s += `<rect x="${32 + x * 16}" y="${py}" width="16" height="16" fill="${lc}"/>`;
-        if (x !== 2) s += `<rect x="${32 + (4 - x) * 16}" y="${py}" width="16" height="16" fill="${lc}"/>`;
+  s += `<rect x="24" y="28" width="96" height="96" rx="10" fill="${lc}" fill-opacity="0.16"/>`;
+  for (let y = 0; y < 7; y++)
+    for (let x = 0; x < 4; x++)
+      if (rand() > 0.42) {
+        const px = 32 + x * 12, py = 34 + y * 12;
+        s += `<rect x="${px}" y="${py}" width="10" height="10" fill="${lc}"/>`;
+        s += `<rect x="${px}" y="${py}" width="10" height="2" fill="#ffffff" fill-opacity="0.22"/>`;
+        if (x < 3) {
+          const mirror = 32 + (6 - x) * 12;
+          s += `<rect x="${mirror}" y="${py}" width="10" height="10" fill="${lc}"/>`;
+          s += `<rect x="${mirror}" y="${py}" width="10" height="2" fill="#ffffff" fill-opacity="0.22"/>`;
+        }
       }
 
   s += `<text x="144" y="46" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="16" font-weight="700" fill="${c.value}">${esc(clip(r.name, 26))}</text>`;
@@ -766,35 +848,58 @@ const card = (r, c) => {
   });
   s += `</g>`;
   s += drawText(String(r.stargazers_count), 166, 154, 3, c.green);
+  s += `<g fill="none" stroke="${c.label}" stroke-width="2" shape-rendering="crispEdges"><path d="M252 158v14m0-10h11v8"/><circle cx="252" cy="157" r="3" fill="${c.label}"/><circle cx="252" cy="173" r="3" fill="${c.label}"/><circle cx="263" cy="170" r="3" fill="${c.label}"/></g>`;
+  s += drawText(String(r.forks_count ?? 0), 272, 154, 3, c.label);
   if (r.language)
     s += `<text x="504" y="172" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="12" fill="${c.label}">${esc(r.language)}</text>`;
+  if (r.pushed_at) {
+    const updated = new Date(r.pushed_at).toISOString().slice(0, 10);
+    s += `<text x="504" y="188" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="10" fill="${c.label}">UPDATED ${updated}</text>`;
+  }
   return svg(W, H, s, `${r.name}: ${r.description ?? ""}`);
 };
 
-// ================= WRITE FILES =================
-mkdirSync("assets/cards", { recursive: true });
-for (const [mode, c] of Object.entries(themes)) {
-  writeFileSync(`assets/header-${mode}.svg`, room(mode));
-  writeFileSync(`assets/stats-${mode}.svg`, statsCard(c));
-  writeFileSync(`assets/projects-${mode}.svg`, projectsHeader(c));
-  for (const r of repos)
-    writeFileSync(`assets/cards/${r.name.toLowerCase()}-${mode}.svg`, card(r, c));
-}
-
-// ================= README PROJECT CARDS =================
+// ================= BUILD OUTPUTS =================
 const block = repos
   .map((r) => {
-    const f = r.name.toLowerCase();
-    return `<a href="${r.html_url}"><picture><source media="(prefers-color-scheme: light)" srcset="assets/cards/${f}-light.svg" /><img src="assets/cards/${f}-dark.svg" width="49%" alt="${esc(r.name)}" /></picture></a>`;
+    const f = r.name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-");
+    const light = relative(dirname(README_FILE), resolve(ASSET_DIR, `cards/${f}-light.svg`)).split(sep).join("/");
+    const dark = relative(dirname(README_FILE), resolve(ASSET_DIR, `cards/${f}-dark.svg`)).split(sep).join("/");
+    return `<a href="${esc(r.html_url)}"><picture><source media="(prefers-color-scheme: light)" srcset="${esc(light)}" /><img src="${esc(dark)}" width="49%" alt="${esc(r.name)}" /></picture></a>`;
   })
   .join("\n");
 
-const md = readFileSync("README.md", "utf8");
-if (!md.includes("<!--PROJECTS:START-->")) throw new Error("PROJECTS markers missing in README.md");
-const next = md.replace(
-  /<!--PROJECTS:START-->[\s\S]*?<!--PROJECTS:END-->/,
-  `<!--PROJECTS:START-->\n${block}\n<!--PROJECTS:END-->`
-);
-if (next !== md) writeFileSync("README.md", next);
+const startMarker = "<!--PROJECTS:START-->";
+const endMarker = "<!--PROJECTS:END-->";
+const md = readFileSync(README_FILE, "utf8");
+const start = md.indexOf(startMarker), end = md.indexOf(endMarker);
+if (start < 0 || end < start || md.indexOf(startMarker, start + startMarker.length) >= 0 || md.indexOf(endMarker, end + endMarker.length) >= 0)
+  throw new Error(`README project markers are missing, duplicated, or out of order in ${README_FILE}.`);
+const next = md.slice(0, start + startMarker.length) + `\n${block}\n` + md.slice(end);
 
-console.log({ commitsAll, prs, stars, best, langs, commitLines, projects: repos.map((r) => r.name), weather });
+const outputs = new Map();
+for (const [mode, c] of Object.entries(themes)) {
+  outputs.set(join(ASSET_DIR, `header-${mode}.svg`), room(mode));
+  outputs.set(join(ASSET_DIR, `stats-${mode}.svg`), statsCard(c));
+  outputs.set(join(ASSET_DIR, `projects-${mode}.svg`), projectsHeader(c));
+  for (const r of repos) {
+    const f = r.name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-");
+    outputs.set(join(ASSET_DIR, "cards", `${f}-${mode}.svg`), card(r, c));
+  }
+}
+
+if (DRY_RUN) {
+  console.log(`Dry run: prepared ${outputs.size} SVG files${next === md ? "" : " plus README update"}.`);
+} else {
+  const atomicWrite = (file, content) => {
+    mkdirSync(dirname(file), { recursive: true });
+    const temp = `${file}.tmp-${process.pid}`;
+    writeFileSync(temp, content, "utf8");
+    renameSync(temp, file);
+  };
+  for (const [file, content] of outputs) atomicWrite(file, content);
+  if (next !== md) atomicWrite(README_FILE, next);
+  console.log(`Generated ${outputs.size} SVG files${next === md ? "" : " and updated README"}.`);
+}
+
+console.log({ activity, prs, stars, best, current, langs, commitLines, projects: repos.map((r) => r.name), weather, outputScale: OUTPUT_SCALE });
