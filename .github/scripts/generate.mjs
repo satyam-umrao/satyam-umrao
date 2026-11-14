@@ -5,13 +5,12 @@ import { dirname, join, relative, resolve, sep } from "node:path";
 const USER = process.env.GITHUB_USER || "satyam-umrao";
 const NAME = process.env.PROFILE_NAME || "SATYAM UMRAO";
 const CITY = process.env.CITY || "KANPUR";
-const TIME_ZONE = process.env.TIME_ZONE || "Asia/Kolkata";
 const LAT = Number(process.env.LATITUDE ?? 26.4499);
 const LON = Number(process.env.LONGITUDE ?? 80.3319);
 const FEATURED = (process.env.FEATURED_REPOS || "ToolNest-AI,caffora,Java,MyDocuStack")
   .split(",").map((x) => x.trim()).filter(Boolean);
-const scaleInput = Number(process.env.OUTPUT_SCALE || 4);
-const OUTPUT_SCALE = Number.isFinite(scaleInput) ? Math.min(4, Math.max(1, Math.floor(scaleInput))) : 4;
+const scaleInput = Number(process.env.OUTPUT_SCALE || 2);
+const OUTPUT_SCALE = Number.isFinite(scaleInput) ? Math.min(4, Math.max(1, Math.floor(scaleInput))) : 2;
 const ASSET_DIR = process.env.ASSET_DIR || "assets";
 const README_FILE = process.env.README_FILE || "README.md";
 const DRY_RUN = process.argv.includes("--dry-run");
@@ -21,7 +20,7 @@ const GH_TOKEN = process.env.GITHUB_TOKEN || process.env.STATS_TOKEN;
 const STATS_TOKEN = process.env.STATS_TOKEN || GH_TOKEN;
 
 if (SHOW_HELP) {
-  console.log(`GitHub profile SVG generator\n\nUsage: node generate.mjs [--dry-run]\n\nEnvironment:\n  GITHUB_USER       GitHub login (default: ${USER})\n  PROFILE_NAME      Name shown on the room sign\n  CITY, LATITUDE, LONGITUDE  Weather location\n  TIME_ZONE         Clock timezone (default: ${TIME_ZONE})\n  FEATURED_REPOS    Comma-separated repository names\n  OUTPUT_SCALE      SVG output density from 1 to 4 (default: 4)\n  ASSET_DIR         Asset output folder (default: assets)\n  README_FILE       README to update (default: README.md)\n  GITHUB_TOKEN      GitHub token; can also supply STATS_TOKEN\n  STATS_TOKEN       GitHub token with GraphQL access\n\n--dry-run fetches data and builds the SVGs without writing files.`);
+  console.log(`GitHub profile SVG generator\n\nUsage: node generate.mjs [--dry-run]\n\nEnvironment:\n  GITHUB_USER       GitHub login (default: ${USER})\n  PROFILE_NAME      Name shown on the room sign\n  CITY, LATITUDE, LONGITUDE  Weather location\n  FEATURED_REPOS    Comma-separated repository names\n  OUTPUT_SCALE      SVG output density from 1 to 4 (default: 2)\n  ASSET_DIR         Asset output folder (default: assets)\n  README_FILE       README to update (default: README.md)\n  GITHUB_TOKEN      GitHub token; can also supply STATS_TOKEN\n  STATS_TOKEN       GitHub token with GraphQL access\n\n--dry-run fetches data and builds the SVGs without writing files.`);
   process.exit(0);
 }
 if (!STATS_TOKEN) throw new Error("GitHub token missing. Set STATS_TOKEN or GITHUB_TOKEN.");
@@ -84,13 +83,13 @@ const { user } = await gql(
   { login: USER }
 );
 if (!user?.createdAt) throw new Error(`GitHub user "${USER}" was not found or is inaccessible.`);
-const queryNow = new Date();
+const now = new Date();
 let commits = 0, prs = 0, priv = 0;
 const days = new Map();
 
-for (let y = new Date(user.createdAt).getUTCFullYear(); y <= queryNow.getUTCFullYear(); y++) {
+for (let y = new Date(user.createdAt).getUTCFullYear(); y <= now.getUTCFullYear(); y++) {
   const from = `${y}-01-01T00:00:00Z`;
-  const to = y === queryNow.getUTCFullYear() ? queryNow.toISOString() : `${y}-12-31T23:59:59Z`;
+  const to = y === now.getUTCFullYear() ? now.toISOString() : `${y}-12-31T23:59:59Z`;
   const d = await gql(
     `query($login:String!,$from:DateTime!,$to:DateTime!){
       user(login:$login){
@@ -149,7 +148,7 @@ const shiftDay = (date, amount) => {
   d.setUTCDate(d.getUTCDate() + amount);
   return dayKey(d);
 };
-const todayKey = dayKey(queryNow);
+const todayKey = dayKey(now);
 let streakDate = days.get(todayKey) > 0 ? todayKey : shiftDay(todayKey, -1);
 let current = 0;
 while (days.get(streakDate) > 0) {
@@ -207,7 +206,7 @@ let weather = null;
 for (let attempt = 0; attempt < 3 && !weather; attempt++) {
   try {
     const data = await requestJson(
-      `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day&timezone=${encodeURIComponent(TIME_ZONE)}`
+      `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day&timezone=Asia%2FKolkata`
     );
     const w = data.current;
     if (!w) throw new Error("Weather service returned no current conditions.");
@@ -235,6 +234,13 @@ const KIND_LABEL = {
 };
 const overcast = ["cloudy", "fog", "drizzle", "rain", "snow", "storm"].includes(kind);
 
+// time in India (IST = UTC+5:30)
+const istMinutes = (now.getUTCHours() * 60 + now.getUTCMinutes() + 330) % 1440;
+const hr24 = Math.floor(istMinutes / 60), min = istMinutes % 60;
+const isDay = weather ? weather.isDay : hr24 >= 6 && hr24 < 18;
+const twilight = isDay && (hr24 < 7 || hr24 >= 17);
+const stampTime = `${String(hr24).padStart(2, "0")}:${String(min).padStart(2, "0")} IST`;
+
 // ================= 5. PROJECT REPOS (public only) =================
 const repos = [];
 for (const name of FEATURED) {
@@ -246,23 +252,6 @@ for (const name of FEATURED) {
     console.warn(`Skipped ${name}: ${e.message} (check spelling and that it is public)`);
   }
 }
-
-// Snapshot the clock after network requests so long-running API fetches cannot
-// leave the room clock displaying the time from the start of the run.
-const now = new Date();
-const clockParts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
-  timeZone: TIME_ZONE,
-  year: "numeric", month: "2-digit", day: "2-digit",
-  hour: "2-digit", minute: "2-digit", second: "2-digit", timeZoneName: "short", hourCycle: "h23",
-}).formatToParts(now).map(({ type, value }) => [type, value]));
-const localDate = `${clockParts.year}-${clockParts.month}-${clockParts.day}`;
-const hr24 = Number(clockParts.hour);
-const min = Number(clockParts.minute);
-const clockSeconds = Number(clockParts.second) + now.getUTCMilliseconds() / 1000;
-const timeZoneLabel = clockParts.timeZoneName || TIME_ZONE;
-const isDay = weather ? weather.isDay : hr24 >= 6 && hr24 < 18;
-const twilight = isDay && (hr24 < 7 || hr24 >= 17);
-const stampTime = `${String(hr24).padStart(2, "0")}:${String(min).padStart(2, "0")}:${String(Math.floor(clockSeconds)).padStart(2, "0")} ${timeZoneLabel}`;
 
 // ================= PIXEL FONT (5x7) =================
 const FONT = Object.fromEntries(
@@ -473,12 +462,6 @@ const room = (mode) => {
   const rug = dark ? ["#2a3a5c", "#34487a", "#4a6199"] : ["#6d7fa8", "#8ea0c9", "#b0bfe0"];
   const wain = mix(P.wallA, "#000000", 0.2);
   const catLight = mix(P.cat, "#ffffff", 0.25);
-  const skin = dark ? "#c88f6d" : "#ae704f";
-  const skinHi = mix(skin, "#ffffff", 0.22);
-  const hair = dark ? "#30251f" : "#342820";
-  const shirt = dark ? "#2e7894" : "#326b8c";
-  const shirtHi = mix(shirt, "#ffffff", 0.2);
-  const pants = dark ? "#343b54" : "#46526b";
   let s = "";
 
   // ---- animations (CSS inside the SVG)
@@ -497,14 +480,12 @@ const room = (mode) => {
 .plant{transform-origin:50% 100%;animation:sway 5s ease-in-out infinite}
 .swing{transform-box:view-box;transform-origin:540px 0;animation:swing 6s ease-in-out infinite}
 .cat{transform-origin:50% 100%;animation:breathe 3.6s ease-in-out infinite}
-.human{transform-box:fill-box;transform-origin:50% 100%;animation:human-breathe 3.2s ease-in-out infinite}
-.typing{animation:type 0.65s steps(1) infinite}
 .tail{transform-origin:0 50%;animation:wag 3s ease-in-out infinite}
 .zz{opacity:0;animation:zz 4s ease-out infinite}
 .st{opacity:0;animation:steam 2.4s ease-out infinite}
 .glow{animation:glow 4s ease-in-out infinite}
 .bl{animation:blink 1.2s steps(1) infinite}
-.sec{transform-box:view-box;transform-origin:949.5px 73.5px;animation:sweep 60s steps(60) infinite;animation-delay:-${clockSeconds.toFixed(2)}s}
+.sec{transform-box:view-box;transform-origin:949.5px 73.5px;animation:sweep 60s steps(60) infinite}
 .log{animation:scroll linear infinite}
 @keyframes tw{0%,100%{opacity:.15}50%{opacity:1}}
 @keyframes drift{from{transform:translateX(-64px)}to{transform:translateX(214px)}}
@@ -519,8 +500,6 @@ const room = (mode) => {
 @keyframes sway{0%,100%{transform:rotate(-2.2deg)}50%{transform:rotate(2.2deg)}}
 @keyframes swing{0%,100%{transform:rotate(-1.4deg)}50%{transform:rotate(1.4deg)}}
 @keyframes breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.07)}}
-@keyframes human-breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.015)}}
-@keyframes type{0%,100%{transform:translateY(0)}50%{transform:translateY(1px)}}
 @keyframes wag{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(12deg)}}
 @keyframes zz{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(24px,-56px)}}
 @keyframes steam{0%{opacity:0;transform:translateY(0)}30%{opacity:.8}100%{opacity:0;transform:translateY(-24px)}}
@@ -538,7 +517,7 @@ const room = (mode) => {
 
   // ---- wall: striped wallpaper, wainscot, baseboard
   s += R(0, 0, 360, 148, P.wallA);
-  for (let x = 0; x < 360; x += 4) s += R(x, 0, 2, 148, P.wallB) + R(x + 2, 0, 1, 148, mix(P.wallB, "#ffffff", 0.05));
+  for (let x = 0; x < 360; x += 8) s += R(x, 0, 4, 148, P.wallB) + R(x + 4, 0, 1, 148, mix(P.wallB, "#ffffff", 0.05));
   s += R(0, 118, 360, 30, wain) + R(0, 117, 360, 2, mix(wain, "#ffffff", 0.18)) + R(0, 119, 360, 1, mix(wain, "#000000", 0.3));
   for (let x = 6; x < 360; x += 30)
     s += R(x, 124, 24, 18, mix(wain, "#000000", 0.28)) + R(x + 1, 125, 22, 16, mix(wain, "#ffffff", 0.06));
@@ -552,7 +531,7 @@ const room = (mode) => {
     for (let x = (r % 2) * 28; x < 360; x += 56) s += R(x, y, 1, 8, P.floorB);
   }
   const fr = rng(3);
-  for (let i = 0; i < 150; i++)
+  for (let i = 0; i < 70; i++)
     s += R(Math.floor(fr() * 350), 150 + Math.floor(fr() * 28), 3 + Math.floor(fr() * 6), 1, mix(P.floorA, "#ffffff", 0.07));
   s += R(60, 158, 210, 19, rug[0]) + R(62, 160, 206, 15, rug[1]) + R(66, 163, 198, 9, rug[0], 0.45);
   for (let x = 70; x < 262; x += 12) s += R(x, 165, 6, 5, rug[2], 0.55);
@@ -565,10 +544,10 @@ const room = (mode) => {
     : isDay ? (twilight ? ["#6c5b9e", "#f2956b"] : ["#6bb8f5", "#a8dcff"]) : ["#0a1233", "#16245a"];
   const skyAt = (row) => mix(sk[0], sk[1], Math.min(1, Math.round(((row - 16) / 56) * 6) / 6));
   let sky = "";
-  for (let r = 16; r < 72; r += 2) sky += R(20, r, 68, 2, skyAt(r));
+  for (let r = 16; r < 72; r += 4) sky += R(20, r, 68, 4, skyAt(r));
 
   if (!isDay || twilight) {
-    const nStars = !isDay ? (overcast ? 8 : 36) : overcast ? 0 : 10;
+    const nStars = !isDay ? (overcast ? 5 : 22) : overcast ? 0 : 7;
     const rs = rng(11);
     for (let i = 0; i < nStars; i++)
       sky += tw(22 + Math.floor(rs() * 64), 18 + Math.floor(rs() * 34), rs() > 0.85 ? 2 : 1, "#ffffff", rs() * 3, 2 + rs() * 3);
@@ -626,7 +605,7 @@ const room = (mode) => {
     sky += g("cl", `animation-duration:${d.toFixed(1)}s;animation-delay:-${(cr() * d).toFixed(1)}s`, shape);
   }
 
-  const nDrops = { drizzle: 18, rain: 40, storm: 52 }[kind] ?? 0;
+  const nDrops = { drizzle: 10, rain: 24, storm: 30 }[kind] ?? 0;
   const dr = rng(33);
   for (let i = 0; i < nDrops; i++) {
     const dur = 0.55 + dr() * 0.45;
@@ -634,7 +613,7 @@ const room = (mode) => {
   }
   if (kind === "snow") {
     const sr = rng(44);
-    for (let i = 0; i < 32; i++) {
+    for (let i = 0; i < 18; i++) {
       const dur = 4 + sr() * 4;
       sky += `<rect class="sn" x="${60 + Math.floor(sr() * 196)}" y="48" width="3" height="3" fill="#ffffff" style="animation-duration:${dur.toFixed(1)}s;animation-delay:-${(sr() * dur).toFixed(1)}s"/>`;
     }
@@ -699,15 +678,10 @@ const room = (mode) => {
   const ccx = 316, ccy = 24;
   s += disc(ccx, ccy, 13, mix(P.clockRing, "#000000", 0.25)) + disc(ccx, ccy, 12, P.clockRing) + disc(ccx, ccy, 10, P.clockFace);
   for (const [dx, dy] of [[0, -9], [9, 0], [0, 9], [-9, 0]]) s += R(ccx + dx, ccy + dy, 2, 2, P.hand);
-  for (let mark = 1; mark < 12; mark++) {
-    if (mark % 3 === 0) continue;
-    const angle = mark * Math.PI / 6;
-    s += R(Math.round(ccx + Math.sin(angle) * 8), Math.round(ccy - Math.cos(angle) * 8), 1, 1, P.hand);
-  }
-  s += stroke(ccx, ccy, ((min + clockSeconds / 60) / 60) * 2 * Math.PI, 8, 2, P.hand);
-  s += stroke(ccx, ccy, (((hr24 % 12) + min / 60 + clockSeconds / 3600) / 12) * 2 * Math.PI, 5, 2, P.hand);
+  s += stroke(ccx, ccy, (min / 60) * 2 * Math.PI, 8, 2, P.hand);
+  s += stroke(ccx, ccy, (((hr24 % 12) + min / 60) / 12) * 2 * Math.PI, 5, 2, P.hand);
   s += R(ccx - 1, ccy - 1, 3, 3, P.hand);
-  const secHand = `<line class="sec" style="transform:rotate(${clockSeconds * 6}deg)" x1="949.5" y1="73.5" x2="949.5" y2="40" stroke="#d1453b" stroke-width="1.5"/><rect x="947.5" y="71.5" width="4" height="4" fill="#d1453b"/>`;
+  const secHand = `<line class="sec" x1="949.5" y1="73.5" x2="949.5" y2="40" stroke="#d1453b" stroke-width="1.5"/><rect x="947.5" y="71.5" width="4" height="4" fill="#d1453b"/>`;
 
   // shelves: one book per language, succulent, mug with steam, picture
   s += R(252, 80, 104, 4, P.shelf) + R(252, 80, 104, 1, mix(P.shelf, "#ffffff", 0.2)) + R(252, 84, 104, 2, P.shelfDark);
@@ -770,28 +744,9 @@ const room = (mode) => {
   s += R(244, 108, 24, 6, "#3b6fb4") + R(246, 102, 20, 6, "#d9a441") + R(248, 97, 16, 5, "#b4533a") + R(245, 110, 22, 1, "#ffffff", 0.5);
 
   // chair
-  s += R(220, 124, 32, 22, P.chair) + R(222, 126, 28, 2, P.chairHi) + R(235, 128, 2, 16, P.chairHi);
-  s += R(216, 146, 40, 6, P.chair) + R(216, 146, 40, 1, P.chairHi) + R(234, 152, 4, 6, P.lampDark);
-  s += R(222, 157, 32, 2, P.lampDark) + R(222, 159, 4, 2, P.lampDark) + R(250, 159, 4, 2, P.lampDark);
-
-  // seated developer, leaning toward the monitor and typing
-  const person =
-    R(232, 127, 11, 20, pants) + R(245, 127, 11, 20, pants) +
-    R(229, 146, 16, 4, hair) + R(244, 146, 16, 4, hair) +
-    R(231, 112, 27, 22, shirt) + R(232, 113, 24, 3, shirtHi) +
-    R(227, 114, 8, 9, mix(shirt, "#000000", 0.14)) + R(255, 114, 7, 9, mix(shirt, "#000000", 0.14)) +
-    R(224, 117, 10, 4, skin) + R(215, 116, 12, 4, skinHi) + R(212, 115, 5, 5, skin) +
-    R(257, 117, 7, 4, skin) + R(261, 116, 4, 5, skinHi) +
-    R(243, 107, 8, 8, skin) + R(245, 109, 5, 2, skinHi) +
-    R(246, 96, 15, 15, skin) + R(244, 100, 4, 10, skin) + R(259, 102, 3, 5, skinHi) +
-    R(245, 94, 16, 5, hair) + R(243, 97, 5, 6, hair) + R(249, 92, 10, 3, hair) +
-    R(244, 106, 4, 2, mix(skin, "#000000", 0.22)) +
-    R(247, 100, 5, 1, hair) + R(247, 101, 1, 3, hair) + R(251, 101, 1, 3, hair) +
-    R(253, 100, 5, 1, hair) + R(253, 101, 1, 3, hair) + R(257, 101, 1, 3, hair) +
-    R(248, 102, 2, 1, "#8fc8d6") + R(254, 102, 2, 1, "#8fc8d6") +
-    R(246, 112, 5, 4, shirtHi) + R(251, 112, 5, 4, shirtHi) + R(250, 117, 2, 7, "#e7c46a");
-  s += g("human", "", person);
-  s += g("typing", "", R(212, 115, 5, 5, skin) + R(199, 113, 14, 3, skin) + R(199, 116, 8, 2, skinHi));
+  s += R(198, 124, 32, 22, P.chair) + R(200, 126, 28, 2, P.chairHi) + R(213, 128, 2, 16, P.chairHi);
+  s += R(194, 146, 40, 6, P.chair) + R(194, 146, 40, 1, P.chairHi) + R(212, 152, 4, 6, P.lampDark);
+  s += R(200, 157, 32, 2, P.lampDark) + R(200, 159, 4, 2, P.lampDark) + R(228, 159, 4, 2, P.lampDark);
 
   // sleeping cat (breathes, tail wags, Zs float up)
   s += R(280, 155, 58, 2, "#000000", 0.2);
@@ -807,7 +762,8 @@ const room = (mode) => {
     s += g("zz", `animation-delay:${d}s`, drawText("Z", x, y, px, c.label));
 
   // updated stamp
-  const stamp = `UPDATED ${localDate} ${stampTime}`;
+  const istDate = new Date(now.getTime() + 330 * 60000).toISOString().slice(0, 10);
+  const stamp = `UPDATED ${istDate} ${stampTime}`;
   s += drawText(stamp, W - 24 - textWidth(stamp, 2), H - 22, 2, c.label);
 
   return svg(
@@ -817,7 +773,7 @@ const room = (mode) => {
     `<g clip-path="url(#rc)" shape-rendering="crispEdges">${s}</g>` +
     secHand +
     `<rect x="1" y="1" width="${W - 2}" height="${H - 2}" rx="14" fill="none" stroke="${c.border}" stroke-width="2"/>`,
-    `${NAME}'s pixel room: a developer working at a computer, live ${CITY} weather, latest commits and local time`
+    `${NAME}'s pixel room: live ${CITY} weather, latest commits and languages`
   );
 };
 
