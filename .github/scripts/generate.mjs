@@ -439,12 +439,29 @@ const mix = (a, b, t) => {
 const room = (mode) => {
   const c = themes[mode], P = ROOM[mode];
   const dark = mode === "dark";
-  const W = 1080, H = 540, u = 3;
+  const W = 1080, H = 540, u = 3; // u = design unit (3px). Everything is drawn on a finer 2px pixel grid.
+  const q = (v) => Math.round(v * 1.5);
   const R = (x, y, w, h, fill, op) =>
-    `<rect x="${x * u}" y="${y * u}" width="${w * u}" height="${h * u}" fill="${fill}"${op ? ` fill-opacity="${op}"` : ""}/>`;
+    `<rect x="${q(x) * 2}" y="${q(y) * 2}" width="${Math.max(1, q(w)) * 2}" height="${Math.max(1, q(h)) * 2}" fill="${fill}"${op ? ` fill-opacity="${op}"` : ""}/>`;
   const g = (cls, style, inner) => `<g class="${cls}"${style ? ` style="${style}"` : ""}>${inner}</g>`;
   const tw = (x, y, w, fill, delay, dur) =>
-    `<rect class="tw" x="${x * u}" y="${y * u}" width="${w * u}" height="${w * u}" fill="${fill}" style="animation-delay:-${delay.toFixed(2)}s;animation-duration:${dur.toFixed(2)}s"/>`;
+    `<rect class="tw" x="${q(x) * 2}" y="${q(y) * 2}" width="${Math.max(1, q(w)) * 2}" height="${Math.max(1, q(w)) * 2}" fill="${fill}" style="animation-delay:-${delay.toFixed(2)}s;animation-duration:${dur.toFixed(2)}s"/>`;
+  const ell = (cx, cy, rx, ry, fill, op) => {
+    let o = "";
+    for (let dy = -ry; dy < ry; dy += 0.5) {
+      const t = (dy + 0.25) / ry;
+      const hw = rx * Math.sqrt(Math.max(0, 1 - t * t));
+      if (hw > 0.1) o += R(cx - hw, cy + dy, 2 * hw, 0.5, fill, op);
+    }
+    return o;
+  };
+  const cloudShape = (x, y, big, fill, shade) => {
+    const parts = big
+      ? [[x + 6, y + 2.5, 6, 2.6], [x + 12.5, y + 1.8, 7, 3.2], [x + 19.5, y + 2.8, 6, 2.4], [x + 13, y + 3.8, 12, 1.4]]
+      : [[x + 5, y + 2.4, 5, 2.1], [x + 10.5, y + 1.8, 6, 2.7], [x + 16, y + 2.6, 4.5, 1.9], [x + 10, y + 3.5, 9, 1.2]];
+    return parts.map(([cx, cy, rx, ry]) => ell(cx, cy + 0.5, rx, ry, shade)).join("") +
+      parts.map(([cx, cy, rx, ry]) => ell(cx, cy, rx, ry, fill)).join("");
+  };
   const disc = (cx, cy, r, fill, op) => {
     let o = "";
     for (let dy = -r; dy <= r; dy++) {
@@ -454,25 +471,26 @@ const room = (mode) => {
     return o;
   };
   const crescent = (cx, cy, r, fill) => {
-    const ox = Math.round(r * 0.55), oy = -Math.round(r * 0.25), r2 = r * 0.85;
+    const ox = r * 0.55, oy = -r * 0.25, r2 = r * 0.85;
     let o = "";
-    for (let dy = -r; dy <= r; dy++) {
-      const hw = Math.round(Math.sqrt(r * r - dy * dy));
+    for (let dy = -r; dy < r; dy += 0.5) {
+      const yy = dy + 0.25;
+      const hw = Math.sqrt(Math.max(0, r * r - yy * yy));
       const x0 = cx - hw;
       let x1 = cx + hw;
-      const dd = dy - oy;
-      if (Math.abs(dd) <= r2) x1 = Math.min(x1, cx + ox - Math.round(Math.sqrt(r2 * r2 - dd * dd)) - 1);
-      if (x1 >= x0) o += R(x0, cy + dy, x1 - x0 + 1, 1, fill);
+      const dd = yy - oy;
+      if (Math.abs(dd) <= r2) x1 = Math.min(x1, cx + ox - Math.sqrt(r2 * r2 - dd * dd));
+      if (x1 > x0) o += R(x0, cy + dy, x1 - x0, 0.5, fill);
     }
     return o;
   };
   const stroke = (cx, cy, ang, len, t, fill) => {
     const seen = new Set();
     let o = "";
-    for (let k = 0; k <= len; k += 0.5) {
-      const x = Math.round(cx + Math.sin(ang) * k), y = Math.round(cy - Math.cos(ang) * k);
+    for (let k = 0; k <= len; k += 0.25) {
+      const x = Math.round((cx + Math.sin(ang) * k) * 2) / 2, y = Math.round((cy - Math.cos(ang) * k) * 2) / 2;
       const key = `${x},${y}`;
-      if (!seen.has(key)) { seen.add(key); o += R(x, y, t, t, fill); }
+      if (!seen.has(key)) { seen.add(key); o += R(x - t / 2, y - t / 2, t, t, fill); }
     }
     return o;
   };
@@ -508,6 +526,7 @@ const room = (mode) => {
 .bl{animation:blink 1.2s steps(1) infinite}
 .sec{transform-box:view-box;transform-origin:949.5px 73.5px;animation:sweep 60s steps(60) infinite}
 .log{animation:scroll linear infinite}
+.mote{opacity:0;animation:mote 6s ease-in-out infinite}
 @keyframes tw{0%,100%{opacity:.15}50%{opacity:1}}
 @keyframes drift{from{transform:translateX(-64px)}to{transform:translateX(214px)}}
 @keyframes fall{from{transform:translateY(-14px)}to{transform:translateY(184px)}}
@@ -528,6 +547,7 @@ const room = (mode) => {
 @keyframes blink{0%{opacity:1}50%{opacity:0}}
 @keyframes sweep{to{transform:rotate(360deg)}}
 @keyframes scroll{from{transform:translateY(0)}to{transform:translateY(-${n * lh}px)}}
+@keyframes mote{0%,100%{opacity:0;transform:translate(0,0)}50%{opacity:.75;transform:translate(7px,-12px)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}`;
 
   const defs =
@@ -539,6 +559,8 @@ const room = (mode) => {
   // ---- wall: striped wallpaper, wainscot, baseboard
   s += R(0, 0, 360, 148, P.wallA);
   for (let x = 0; x < 360; x += 8) s += R(x, 0, 4, 148, P.wallB) + R(x + 4, 0, 1, 148, mix(P.wallB, "#ffffff", 0.05));
+  for (let x = 2; x < 360; x += 16) for (let y = 6; y < 114; y += 12)
+    s += R(x + 0.5, y, 1, 1, mix(P.wallB, "#ffffff", 0.07)) + R(x, y + 0.5, 2, 0.5, mix(P.wallB, "#ffffff", 0.05));
   s += R(0, 118, 360, 30, wain) + R(0, 117, 360, 2, mix(wain, "#ffffff", 0.18)) + R(0, 119, 360, 1, mix(wain, "#000000", 0.3));
   for (let x = 6; x < 360; x += 30)
     s += R(x, 124, 24, 18, mix(wain, "#000000", 0.28)) + R(x + 1, 125, 22, 16, mix(wain, "#ffffff", 0.06));
@@ -546,32 +568,49 @@ const room = (mode) => {
 
   // ---- floor: planks, seams, grain, rug
   s += R(0, 148, 360, 32, P.floorA) + R(0, 148, 360, 1, mix(P.floorA, "#ffffff", 0.18));
+  const pt = rng(8);
   for (let r = 0; r < 4; r++) {
     const y = 148 + r * 8;
+    for (let x = (r % 2) * 28 - 56; x < 360; x += 56) {
+      const x0 = Math.max(0, x), x1 = Math.min(360, x + 56);
+      s += R(x0, y, x1 - x0, 8, mix(P.floorA, pt() > 0.5 ? "#ffffff" : "#000000", 0.02 + pt() * 0.05));
+      if (x >= 0) s += R(x, y, 1, 8, P.floorB);
+      if (pt() > 0.75) s += ell(x0 + 8 + pt() * 30, y + 4, 1.4, 0.9, mix(P.floorA, "#000000", 0.3));
+    }
     s += R(0, y, 360, 1, P.floorB);
-    for (let x = (r % 2) * 28; x < 360; x += 56) s += R(x, y, 1, 8, P.floorB);
   }
   const fr = rng(3);
   for (let i = 0; i < 70; i++)
     s += R(Math.floor(fr() * 350), 150 + Math.floor(fr() * 28), 3 + Math.floor(fr() * 6), 1, mix(P.floorA, "#ffffff", 0.07));
   s += R(60, 158, 210, 19, rug[0]) + R(62, 160, 206, 15, rug[1]) + R(66, 163, 198, 9, rug[0], 0.45);
-  for (let x = 70; x < 262; x += 12) s += R(x, 165, 6, 5, rug[2], 0.55);
+  for (let x = 76; x < 264; x += 12)
+    for (let dy = -2.5; dy <= 2.5; dy += 0.5) {
+      const hw = 3 - Math.abs(dy) * 1.1;
+      if (hw > 0) s += R(x - hw, 167.5 + dy, 2 * hw, 0.5, rug[2], 0.7);
+    }
   for (let x = 62; x < 268; x += 4) s += R(x, 177, 2, 2, rug[0]);
   s += R(98, 150, 190, 7, "#000000", 0.18);
+  if (!overcast || isDay) {
+    const lc2 = isDay ? "#fff1b8" : "#9db7ff", lop = isDay ? (overcast ? 0.05 : 0.11) : 0.05;
+    for (let r = 0; r < 24; r++) {
+      const x0 = 18 + r * 1.6, wdt = 15 - r * 0.2;
+      s += R(x0, 150 + r * 0.55, wdt, 0.55, lc2, lop) + R(x0 + wdt + 3, 150 + r * 0.55, wdt, 0.55, lc2, lop);
+    }
+  }
 
   // ---- window: live sky
   const sk = overcast
     ? isDay ? (twilight ? ["#5d5a78", "#b78a74"] : ["#8fa3b8", "#b7c4d1"]) : ["#121827", "#1b2336"]
     : isDay ? (twilight ? ["#6c5b9e", "#f2956b"] : ["#6bb8f5", "#a8dcff"]) : ["#0a1233", "#16245a"];
-  const skyAt = (row) => mix(sk[0], sk[1], Math.min(1, Math.round(((row - 16) / 56) * 6) / 6));
+  const skyAt = (row) => mix(sk[0], sk[1], Math.min(1, Math.round(((row - 16) / 56) * 12) / 12));
   let sky = "";
-  for (let r = 16; r < 72; r += 4) sky += R(20, r, 68, 4, skyAt(r));
+  for (let r = 16; r < 72; r += 2) sky += R(20, r, 68, 2, skyAt(r));
 
   if (!isDay || twilight) {
-    const nStars = !isDay ? (overcast ? 5 : 22) : overcast ? 0 : 7;
+    const nStars = !isDay ? (overcast ? 8 : 46) : overcast ? 0 : 12;
     const rs = rng(11);
     for (let i = 0; i < nStars; i++)
-      sky += tw(22 + Math.floor(rs() * 64), 18 + Math.floor(rs() * 34), rs() > 0.85 ? 2 : 1, "#ffffff", rs() * 3, 2 + rs() * 3);
+      sky += tw(22 + Math.floor(rs() * 128) / 2, 18 + Math.floor(rs() * 68) / 2, rs() > 0.9 ? 1 : 0.5, "#ffffff", rs() * 3, 2 + rs() * 3);
   }
 
   if (!overcast && isDay) {
@@ -581,27 +620,41 @@ const room = (mode) => {
     let rays = "";
     for (const [dx, dy] of [[0, -10], [0, 9], [-10, 0], [9, 0], [-7, -7], [7, -7], [-7, 7], [7, 7]])
       rays += R(cx + dx, cy + dy, 2, 2, "#ffe98a");
-    sky += disc(cx, cy, 10, col, 0.18) + g("o pulse", "", rays) + disc(cx, cy, 6, col) + disc(cx - 1, cy - 1, 3, "#fff3b0", 0.7);
+    sky += ell(cx + 0.5, cy + 0.5, 12, 12, col, 0.07) + ell(cx + 0.5, cy + 0.5, 9, 9, col, 0.12) + g("o pulse", "", rays) + ell(cx + 0.5, cy + 0.5, 6.5, 6.5, col) + ell(cx - 1, cy - 1, 3.2, 3.2, "#fff3b0", 0.7);
   }
   if (!overcast && !isDay) {
     const f = Math.min(1, Math.max(0, (dayHr >= 18 ? dayHr - 18 : dayHr + 6) / 12));
     const cx = Math.round(34 + f * 40), cy = Math.round(58 - Math.sin(Math.PI * f) * 30);
-    sky += disc(cx, cy, 9, "#f4efd0", 0.1) + crescent(cx, cy, 5, "#f4efd0");
+    sky += ell(cx, cy, 13, 13, "#f4efd0", 0.05) + ell(cx, cy, 9, 9, "#f4efd0", 0.1) + crescent(cx, cy, 5.5, "#f4efd0");
   }
 
-  // distant skyline
+  // distant skyline (two layers)
   const city = rng(9);
   const bcol = isDay ? mix(sk[1], "#35506e", overcast ? 0.7 : 0.55) : "#0a0f1f";
+  const farCol = isDay ? mix(bcol, sk[1], 0.45) : "#121c3a";
+  const winCols = ["#f2c14e", "#ffe08a", "#f2c14e", "#8ec5ff"];
   let sx = 20;
+  while (sx < 88) {
+    const bw = Math.min(3 + Math.floor(city() * 4), 88 - sx);
+    const bh = 9 + Math.floor(city() * 9);
+    sky += R(sx, 72 - bh, bw, bh, farCol);
+    if (city() > 0.7) sky += R(sx + bw / 2, 72 - bh - 2, 0.5, 2, farCol);
+    sx += bw;
+  }
+  sx = 20;
   while (sx < 88) {
     const bw = Math.min(4 + Math.floor(city() * 4), 88 - sx);
     const bh = 6 + Math.floor(city() * 9), top = 72 - bh;
-    sky += R(sx, top, bw, bh, bcol);
-    for (let wy = top + 2; wy < 70; wy += 3)
-      for (let wx = sx + 1; wx < sx + bw - 1; wx += 2) {
+    sky += R(sx, top, bw, bh, bcol) + R(sx, top, bw, 0.5, mix(bcol, "#ffffff", 0.12));
+    if (bw >= 5 && city() > 0.6) sky += R(sx + 1, top - 1.5, 2, 1.5, bcol);
+    if (city() > 0.75) sky += R(sx + bw - 1.5, top - 3, 0.5, 3, bcol);
+    for (let wy = top + 1.5; wy < 70; wy += 2)
+      for (let wx = sx + 1; wx < sx + bw - 1; wx += 1.5) {
         const v = city();
-        if (!isDay && v > 0.6) sky += v > 0.93 ? tw(wx, wy, 1, "#f2c14e", city() * 3, 3) : R(wx, wy, 1, 1, "#f2c14e", 0.9);
-        else if (isDay && v > 0.85) sky += R(wx, wy, 1, 1, mix(bcol, "#ffffff", 0.25));
+        if (!isDay && v > 0.55) {
+          const col = winCols[Math.floor(city() * winCols.length)];
+          sky += v > 0.93 ? tw(wx, wy, 0.5, col, city() * 3, 3) : R(wx, wy, 0.5, 1, col, 0.9);
+        } else if (isDay && v > 0.8) sky += R(wx, wy, 0.5, 1, mix(bcol, "#ffffff", 0.28));
       }
     sx += bw + (city() > 0.6 ? 1 : 0);
   }
@@ -619,9 +672,7 @@ const room = (mode) => {
   for (let i = 0; i < nCloud; i++) {
     const y = 18 + Math.floor(cr() * 22);
     const big = overcast || i % 2 === 0;
-    const shape = big
-      ? R(26, y, 6, 1, cc) + R(23, y + 1, 12, 1, cc) + R(21, y + 2, 18, 2, cc) + R(21, y + 4, 18, 1, csh)
-      : R(25, y, 5, 1, cc) + R(22, y + 1, 10, 1, cc) + R(20, y + 2, 14, 2, cc) + R(20, y + 4, 14, 1, csh);
+    const shape = cloudShape(20, y, big, cc, csh);
     const d = 40 + cr() * 40;
     sky += g("cl", `animation-duration:${d.toFixed(1)}s;animation-delay:-${(cr() * d).toFixed(1)}s`, shape);
   }
@@ -648,18 +699,28 @@ const room = (mode) => {
       g("fb", "", R(30, 29, 2, 1, bc) + R(32, 28, 2, 1, bc) + R(34, 29, 2, 1, bc)));
   }
 
+  for (let k = 0; k < 40; k++)
+    sky += R(28 + k * 0.5, 62 - k * 1.1, 2, 1.1, "#ffffff", 0.05) + R(36 + k * 0.5, 62 - k * 1.1, 0.5, 1.1, "#ffffff", 0.04);
+
   // window frame, glass, mullions, sill
   s += R(16, 12, 76, 64, P.frame) + R(16, 12, 76, 2, mix(P.frame, "#ffffff", 0.2)) + R(16, 74, 76, 2, mix(P.frame, "#000000", 0.3));
   s += `<g clip-path="url(#win)">${sky}</g>`;
   s += R(52, 16, 4, 56, P.frame) + R(52, 16, 1, 56, mix(P.frame, "#ffffff", 0.2));
   s += R(20, 42, 68, 4, P.frame) + R(20, 42, 68, 1, mix(P.frame, "#ffffff", 0.2));
-  s += R(10, 76, 88, 4, P.sill) + R(10, 76, 88, 1, mix(P.sill, "#ffffff", 0.2)) + R(10, 80, 88, 2, mix(P.sill, "#000000", 0.35));
-  if (weather) {
-    const lines = [`${weather.temp}C ${KIND_LABEL[kind]}`, `FEELS ${weather.feels}C`, `HUM ${weather.humidity}%`, `WIND ${weather.wind} KPH`];
-    lines.forEach((t, i) => {
-      s += drawText(t, 60, 254 + i * 18, 2, i === 0 ? c.label : mix(c.label, c.bg, 0.25));
-    });
+  {
+    const gr = rng(5);
+    for (let i = 0; i < 70; i++) {
+      const inV = gr() > 0.5;
+      const gx = inV ? (gr() > 0.5 ? 16 + gr() * 3.5 : 88 + gr() * 3.5) : 16 + gr() * 76;
+      const gy = inV ? 12 + gr() * 64 : (gr() > 0.5 ? 12 + gr() * 3.5 : 72 + gr() * 3.5);
+      s += R(gx, gy, inV ? 0.5 : 2 + gr() * 3, inV ? 2 + gr() * 4 : 0.5, mix(P.frame, "#000000", 0.25));
+    }
   }
+  s += R(10, 76, 88, 4, P.sill) + R(10, 76, 88, 1, mix(P.sill, "#ffffff", 0.2)) + R(10, 80, 88, 2, mix(P.sill, "#000000", 0.35));
+  // little plant on the window sill
+  s += R(70, 71, 9, 5, P.pot) + R(70, 71, 9, 1, mix(P.pot, "#ffffff", 0.2)) + R(70, 75, 9, 1, P.potDark);
+  s += R(73, 66, 0.5, 5, P.leaf1) + R(75, 63, 0.5, 8, P.leaf2) + R(77, 67, 0.5, 4, P.leaf1);
+  s += ell(73.5, 66, 1.6, 1.2, P.leaf2) + ell(75.5, 63, 1.4, 1.5, P.leaf2) + ell(77.5, 67, 1.3, 1, P.leaf2);
 
   // curtains + rod
   s += R(2, 8, 104, 2, P.sill) + R(0, 7, 3, 4, P.sill) + R(105, 7, 3, 4, P.sill);
@@ -674,9 +735,9 @@ const room = (mode) => {
     const cols = ["#ff6b6b", "#ffd84d", "#6bcb77", "#4d96ff", "#c77dff"];
     let wire = "", bulbs = "";
     for (let i = 0; i <= 26; i++) {
-      const x = Math.round(4 + i * 13.4), y = 3 + Math.round(2 * Math.sin(i * 0.9));
-      wire += R(x, y, 14, 1, "#2b2b33");
-      bulbs += R(x + 5, y + 1, 2, 3, cols[i % 5]) + tw(x + 4, y + 4, 1, cols[i % 5], (i * 0.37) % 3, 2.2 + (i % 3) * 0.6);
+      const x = Math.round(4 + i * 13.4), y = 3 + Math.round(4 * Math.sin(i * 0.9)) / 2;
+      wire += R(x, y, 14, 0.5, "#2b2b33");
+      bulbs += ell(x + 6, y + 3.5, 2.6, 2.6, cols[i % 5], 0.14) + R(x + 5.5, y + 0.5, 1, 1, "#3a3a44") + R(x + 5, y + 1.5, 2, 2.5, cols[i % 5]) + R(x + 5.5, y + 1.5, 0.5, 1, "#ffffff", 0.6) + tw(x + 5, y + 4, 1, cols[i % 5], (i * 0.37) % 3, 2.2 + (i % 3) * 0.6);
     }
     s += wire + bulbs;
   }
@@ -692,14 +753,19 @@ const room = (mode) => {
   // poster
   s += R(252, 10, 40, 34, P.frame) + R(254, 12, 36, 30, "#1b2a41") + R(254, 12, 36, 1, "#ffffff", 0.08);
   s += drawText("</>", 254 * u + Math.round((36 * u - textWidth("</>", 2)) / 2), 12 * u + 38, 2, "#3fb950");
+  s += R(257, 33, 14, 0.5, "#3fb950", 0.55) + R(257, 35, 9, 0.5, "#3fb950", 0.4) + R(257, 37, 17, 0.5, "#3fb950", 0.55) + R(257, 39, 6, 0.5, "#3fb950", 0.4);
 
   // clock (time of last update + sweeping second hand)
-  const ccx = 316, ccy = 24;
-  s += disc(ccx, ccy, 13, mix(P.clockRing, "#000000", 0.25)) + disc(ccx, ccy, 12, P.clockRing) + disc(ccx, ccy, 10, P.clockFace);
-  for (const [dx, dy] of [[0, -9], [9, 0], [0, 9], [-9, 0]]) s += R(ccx + dx, ccy + dy, 2, 2, P.hand);
-  s += stroke(ccx, ccy, (min / 60) * 2 * Math.PI, 8, 2, P.hand);
+  const ccx = 316.5, ccy = 24.5;
+  s += ell(ccx, ccy, 13.5, 13.5, mix(P.clockRing, "#000000", 0.25)) + ell(ccx, ccy, 12.5, 12.5, P.clockRing) + ell(ccx, ccy, 10.5, 10.5, P.clockFace);
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * 2 * Math.PI, big = i % 3 === 0;
+    s += R(ccx + Math.sin(a) * 9 - (big ? 1 : 0.25), ccy - Math.cos(a) * 9 - (big ? 1 : 0.25), big ? 2 : 0.5, big ? 2 : 0.5, P.hand);
+  }
+  s += R(ccx - 6, ccy - 9, 4, 0.5, "#ffffff", 0.55);
+  s += stroke(ccx, ccy, (min / 60) * 2 * Math.PI, 8, 1, P.hand);
   s += stroke(ccx, ccy, (((hr24 % 12) + min / 60) / 12) * 2 * Math.PI, 5, 2, P.hand);
-  s += R(ccx - 1, ccy - 1, 3, 3, P.hand);
+  s += R(ccx - 1, ccy - 1, 2, 2, P.hand);
   const secHand = `<line class="sec" x1="949.5" y1="73.5" x2="949.5" y2="40" stroke="#d1453b" stroke-width="1.5"/><rect x="947.5" y="71.5" width="4" height="4" fill="#d1453b"/>`;
 
   // shelves: one book per language, succulent, mug with steam, picture
@@ -711,7 +777,7 @@ const room = (mode) => {
     const bw = 5 + (h % 3), bh = 14 + ((h >> 3) % 9);
     if (bx + bw > 340) break;
     s += R(bx, 80 - bh, bw, bh, langColor(l)) + R(bx, 80 - bh, bw, 1, "#ffffff", 0.2) + R(bx + bw - 1, 80 - bh, 1, bh, "#000000", 0.25);
-    s += R(bx + 1, 80 - bh + 3, bw - 2, 1, "#ffffff", 0.4) + R(bx + 1, 80 - 5, bw - 2, 1, "#ffffff", 0.4);
+    s += R(bx + 1, 80 - bh + 3, bw - 2, 0.5, "#ffffff", 0.45) + R(bx + 1, 80 - bh + 4.5, bw - 2, 0.5, "#ffffff", 0.25) + R(bx + 1, 80 - 5, bw - 2, 0.5, "#ffffff", 0.45) + R(bx + 0.5, 80 - bh + 7, bw - 1, 0.5, "#000000", 0.2);
     bx += bw + 1;
   }
   if (bx + 12 <= 352)
@@ -723,14 +789,19 @@ const room = (mode) => {
   s += R(318, 94, 24, 14, P.frame) + R(320, 96, 20, 10, "#2f5d62") + R(320, 102, 20, 4, "#3b7a57") + R(331, 98, 3, 3, "#ffd84d");
 
   // plant (sways)
-  let plant = R(78, 100, 3, 36, P.leaf1);
-  for (const [lx, ly, lw, lhh] of [[66, 108, 12, 3], [82, 104, 12, 3], [64, 116, 14, 3], [82, 114, 14, 3], [68, 124, 10, 3], [82, 122, 12, 3], [72, 95, 10, 4]])
-    plant += R(lx, ly, lw, lhh, P.leaf2) + R(lx, ly + lhh - 1, lw, 1, P.leaf1) + R(lx + 1, ly, lw - 3, 1, mix(P.leaf2, "#ffffff", 0.25));
+  let plant = R(78, 100, 2.5, 36, P.leaf1) + R(78, 100, 0.5, 36, mix(P.leaf1, "#ffffff", 0.2));
+  for (const [lx, ly, lrx, lry] of [[72, 109, 6.5, 1.8], [88, 105, 6.5, 1.8], [71, 117, 7.5, 1.9], [88, 115, 7.5, 1.9], [73, 125, 5.5, 1.6], [88, 123, 6.5, 1.7], [77, 96, 5, 2.2], [82, 97, 4, 1.8]])
+    plant += ell(lx, ly + 0.5, lrx, lry, P.leaf1) + ell(lx, ly, lrx, lry, P.leaf2) + R(lx - lrx + 1, ly, 2 * lrx - 2, 0.5, mix(P.leaf2, "#ffffff", 0.3));
   s += g("plant o", "", plant);
   s += R(66, 134, 26, 3, mix(P.pot, "#ffffff", 0.15)) + R(68, 137, 22, 13, P.pot) + R(68, 146, 22, 4, P.potDark) + R(68, 137, 22, 2, "#2b1d12");
 
   // desk
   s += R(100, 114, 184, 6, P.desk) + R(100, 114, 184, 1, mix(P.desk, "#ffffff", 0.2)) + R(100, 120, 184, 3, P.deskDark);
+  {
+    const dg = rng(17);
+    for (let i = 0; i < 34; i++)
+      s += R(101 + dg() * 170, 114.5 + dg() * 4.5, 3 + dg() * 12, 0.5, dg() > 0.6 ? mix(P.desk, "#ffffff", 0.14) : mix(P.desk, "#000000", 0.16));
+  }
   s += R(114, 123, 156, 27, "#000000", 0.15);
   s += R(108, 123, 6, 35, P.deskDark) + R(270, 123, 6, 35, P.deskDark) + R(108, 123, 1, 35, mix(P.deskDark, "#ffffff", 0.15));
   s += R(238, 123, 32, 30, mix(P.desk, "#000000", 0.15));
@@ -740,6 +811,10 @@ const room = (mode) => {
   s += g("glow", "", R(106, 82, 22, 4, P.lamp, 0.1) + R(102, 86, 30, 6, P.lamp, 0.07) + R(98, 92, 38, 8, P.lamp, 0.05) + R(94, 100, 46, 10, P.lamp, 0.04));
   s += R(112, 72, 10, 2, P.lamp) + R(110, 74, 14, 2, P.lamp) + R(108, 76, 18, 2, P.lamp) + R(106, 78, 22, 2, P.lamp) + R(104, 80, 26, 2, mix(P.lamp, "#000000", 0.2));
   s += R(116, 82, 3, 28, P.lampDark) + R(108, 110, 18, 4, P.lampDark) + R(110, 109, 14, 1, mix(P.lampDark, "#ffffff", 0.2));
+  s += R(111, 76, 0.5, 6, mix(P.lamp, "#000000", 0.12)) + R(123, 76, 0.5, 6, mix(P.lamp, "#000000", 0.12)) + R(117, 72, 0.5, 10, mix(P.lamp, "#000000", 0.12));
+  s += R(112, 72, 6, 0.5, mix(P.lamp, "#ffffff", 0.35)) + ell(117.5, 83, 2, 1.4, "#fff3b0", 0.9);
+  for (let i = 0; i < 7; i++)
+    s += `<rect class="mote" x="${300 + i * 14}" y="${258 + ((i * 29) % 64)}" width="2" height="2" fill="${P.lamp}" style="animation-delay:-${(i * 0.9).toFixed(1)}s;animation-duration:${5 + (i % 3)}s"/>`;
 
   // monitor with scrolling commits
   s += R(132, 44, 120, 56, P.bezel) + R(134, 46, 116, 52, mix(P.bezel, "#ffffff", 0.08)) + R(136, 48, 112, 46, P.screen);
@@ -755,10 +830,11 @@ const room = (mode) => {
     });
   s += `<g clip-path="url(#scr)"><g${n >= 2 ? ` class="log" style="animation-duration:${Math.max(8, n * 2.4)}s"` : ""}>${rows}</g></g>`;
   s += `<rect x="408" y="144" width="336" height="138" fill="url(#scan)"/>`;
+  for (let r = 0; r < 46; r++) s += R(190 - r * 1.1, 48 + r, 6, 1, "#ffffff", 0.035) + R(199 - r * 1.1, 48 + r, 2, 1, "#ffffff", 0.03);
 
   // keyboard, mouse, book stack
   s += R(146, 111, 56, 3, "#1b2130");
-  for (let i = 0; i < 13; i++) s += R(147 + i * 4, 112, 2, 1, "#3a4458");
+  for (let i = 0; i < 26; i++) s += R(146.5 + i * 2.1, 111.5, 1.5, 0.5, "#3a4458") + R(147 + i * 2.1, 112.5, 1.5, 0.5, "#2a3140");
   s += R(210, 111, 7, 3, "#1b2130") + R(212, 111, 3, 1, "#3a4458");
   s += R(244, 108, 24, 6, "#3b6fb4") + R(246, 102, 20, 6, "#d9a441") + R(248, 97, 16, 5, "#b4533a") + R(245, 110, 22, 1, "#ffffff", 0.5);
 
@@ -774,15 +850,29 @@ const room = (mode) => {
     R(304, 142, 3, 13, P.catDark) + R(312, 142, 3, 13, P.catDark) + R(320, 142, 3, 13, P.catDark) +
     R(282, 146, 16, 9, P.cat) + R(284, 146, 12, 1, catLight) +
     R(282, 142, 4, 4, P.cat) + R(283, 143, 2, 2, "#e8a0a8") + R(292, 142, 4, 4, P.cat) + R(293, 143, 2, 2, "#e8a0a8") +
-    R(285, 150, 4, 1, "#2b1d12") + R(291, 150, 4, 1, "#2b1d12") + R(288, 152, 2, 1, "#e8a0a8") + R(286, 153, 8, 2, catLight);
+    R(285, 150, 4, 1, "#2b1d12") + R(291, 150, 4, 1, "#2b1d12") + R(288, 152, 2, 1, "#e8a0a8") + R(286, 153, 8, 2, catLight) +
+    R(280, 151, 3, 0.5, "#ffffff", 0.7) + R(280, 152, 3, 0.5, "#ffffff", 0.55) + R(295, 151, 3, 0.5, "#ffffff", 0.7) + R(295, 152, 3, 0.5, "#ffffff", 0.55) +
+    R(299, 143, 0.5, 2, catLight) + R(307, 142.5, 0.5, 2, catLight) + R(315, 143, 0.5, 2, catLight) + R(323, 142.5, 0.5, 2, catLight) +
+    R(300, 148, 22, 0.5, mix(P.cat, "#ffffff", 0.12)) + R(298, 150.5, 28, 0.5, mix(P.cat, "#000000", 0.12)) + R(283, 147, 0.5, 1, "#ffffff", 0.4) + R(294, 147, 0.5, 1, "#ffffff", 0.4);
   s += g("cat o", "", cat);
-  s += g("tail o", "", R(328, 148, 12, 5, P.cat) + R(336, 145, 4, 4, P.cat) + R(332, 148, 2, 5, P.catDark));
+  s += g("tail o", "", R(328, 148, 12, 5, P.cat) + R(336, 144.5, 4, 4.5, P.cat) + R(332, 148, 1.5, 5, P.catDark) + R(336.5, 144.5, 1.5, 4.5, P.catDark) + R(338.5, 144.5, 1.5, 1.5, catLight));
   for (const [x, y, px, d] of [[850, 416, 3, 0], [872, 400, 2, -1.3], [894, 384, 2, -2.6]])
     s += g("zz", `animation-delay:${d}s`, drawText("Z", x, y, px, c.label));
 
+  // soft vignette
+  {
+    const vig = dark ? 0.22 : 0.1;
+    for (let i = 0; i < 14; i++) {
+      const op = (vig * ((14 - i) / 14) ** 2).toFixed(3);
+      s += R(i, 0, 1, 180, "#000000", op) + R(359 - i, 0, 1, 180, "#000000", op) + R(0, i, 360, 1, "#000000", op) + R(0, 179 - i, 360, 1, "#000000", op);
+    }
+  }
+
   // updated stamp
   const stamp = `UPDATED ${localDate} ${stampTime}`;
-  s += drawText(stamp, W - 24 - textWidth(stamp, 2), H - 22, 2, c.label);
+  const stampW = textWidth(stamp, 2);
+  s += `<rect x="${W - 24 - stampW - 10}" y="${H - 28}" width="${stampW + 20}" height="26" rx="6" fill="${c.bg}" fill-opacity="0.78"/>`;
+  s += drawText(stamp, W - 24 - stampW, H - 22, 2, c.label);
 
   return svg(
     W, H,
